@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@300;400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Italiana&family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Noto+Serif+Ethiopic:wght@300;400;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cinzel", Georgia, serif;
+  --font-bebas: "Bebas Neue", sans-serif;
+  --font-luxury: "Cormorant Garamond", Georgia, serif;
+  --font-display: "Italiana", "Cinzel", serif;
+  --font-accent: "Syne", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-ethiopic: "Noto Serif Ethiopic", Georgia, serif;
+}
+
+@layer base {
+  body {
+    background-color: #090807;
+    color: #e5e5e0;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Lumière Luxury Gold Glow utilities */
+.text-glow-gold {
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.45), 0 0 22px rgba(212, 175, 55, 0.2);
+}
+
+.text-glow-gold-dim {
+  text-shadow: 0 0 8px rgba(197, 160, 89, 0.3);
+}
+
+.shadow-gold-premium {
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.08), inset 0 0 12px rgba(212, 175, 55, 0.03);
+}
+
+.shadow-gold-active {
+  box-shadow: 0 0 35px rgba(212, 175, 55, 0.15), inset 0 0 12px rgba(212, 175, 55, 0.05);
+}
+
+/* Polished Editorial custom transitions */
+.transition-luxury {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom scrollbar in dark bronze */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #090807;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4af37;
+  border-radius: 2px;
+  box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c5a059;
+}

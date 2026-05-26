@@ -1,0 +1,6 @@
+{
+  "name": "Tattoo Atelier",
+  "description": "A luxury, minimalist fine-line body art concept studio website featuring a filterable interactive gallery, custom anatomical mapping scheduler, and a secure administration panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
