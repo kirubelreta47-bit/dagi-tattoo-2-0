@@ -58,3 +58,41 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #c5a059;
 }
+
+/* Light theme surface softening */
+[data-theme="light"] .bg-white {
+  background-color: #f7f3ef !important;
+}
+[data-theme="light"] .bg-white\/90 {
+  background-color: rgba(247, 243, 239, 0.9) !important;
+}
+[data-theme="light"] .bg-white\/95 {
+  background-color: rgba(247, 243, 239, 0.95) !important;
+}
+[data-theme="light"] .bg-white\/80 {
+  background-color: rgba(247, 243, 239, 0.8) !important;
+}
+[data-theme="light"] .border-neutral-100 {
+  border-color: rgba(0, 0, 0, 0.18) !important;
+}
+[data-theme="light"] .text-neutral-700 {
+  color: rgba(0, 0, 0, 0.92) !important;
+}
+[data-theme="light"] .text-neutral-600 {
+  color: rgba(0, 0, 0, 0.86) !important;
+}
+[data-theme="light"] .text-neutral-500 {
+  color: rgba(0, 0, 0, 0.78) !important;
+}
+[data-theme="light"] .text-neutral-450 {
+  color: rgba(0, 0, 0, 0.82) !important;
+}
+[data-theme="light"] .text-neutral-400 {
+  color: rgba(0, 0, 0, 0.72) !important;
+}
+[data-theme="light"] .text-neutral-300 {
+  color: rgba(0, 0, 0, 0.62) !important;
+}
+[data-theme="light"] .text-neutral-200 {
+  color: rgba(0, 0, 0, 0.52) !important;
+}

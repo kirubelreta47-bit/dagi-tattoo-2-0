@@ -1,0 +1,171 @@
+{
+  "gallery": [
+    {
+      "id": "gal-1",
+      "title": "Celestial Constellation Alignment",
+      "category": "Geometric",
+      "styleName": "Celestial & Geometric",
+      "src": "/src/assets/images/celestial_geometric_tattoo_1779697256322.png",
+      "description": "Delicate moon cycle with clean line graphics in gold-style black ink",
+      "order": 1
+    },
+    {
+      "id": "gal-2",
+      "title": "Decadent Ornamental Rose Scroll",
+      "category": "Fine-Line",
+      "styleName": "Fine-Line Florals",
+      "src": "/src/assets/images/floral_ornamental_tattoo_1779697274753.png",
+      "description": "Cascading rose vine and ornamental geometric detailing",
+      "order": 2
+    },
+    {
+      "id": "gal-3",
+      "title": "Sovereign Crowned Lion Portrait",
+      "category": "Realism",
+      "styleName": "Neo-Traditional Realism",
+      "src": "/src/assets/images/lion_geometric_tattoo_1779697294632.png",
+      "description": "Bold lion portrait with elegant geometric crown patterns",
+      "order": 3
+    },
+    {
+      "id": "gal-4",
+      "title": "Japanese Brushstroke Wave & Sakura",
+      "category": "Japanese",
+      "styleName": "Japanese Wave & Sakura",
+      "src": "/src/assets/images/wave_cherry_blossom_tattoo_1779697314659.png",
+      "description": "Minimalist wave layout with falling cherry blossom patterns",
+      "order": 4
+    },
+    {
+      "id": "gal-5",
+      "title": "Gothic Skull & Rose",
+      "category": "Custom",
+      "styleName": "Custom Script & Tiny Typography",
+      "src": "/src/assets/images/gothic_skull_tattoo_1779785081844.png",
+      "description": "Gothic aesthetic with intricate detail work",
+      "order": 5
+    },
+    {
+      "id": "gal-6",
+      "title": "Minimalist Flying Swallow",
+      "category": "Fine-Line",
+      "styleName": "Fine-Line Minimal",
+      "src": "/src/assets/images/swallow_bird_tattoo_1779785104583.png",
+      "description": "Elegant minimalist bird design with flowing lines",
+      "order": 6
+    }
+  ],
+  "services": [
+    {
+      "id": "svc-1",
+      "name": "Celestial & Geometric",
+      "description": "Clean lines and cosmic-inspired geometric patterns",
+      "priceStarting": 250,
+      "estimatedTime": "2-4 hours",
+      "order": 1
+    },
+    {
+      "id": "svc-2",
+      "name": "Fine-Line Florals",
+      "description": "Delicate botanical designs with intricate detail",
+      "priceStarting": 300,
+      "estimatedTime": "2-3 hours",
+      "order": 2
+    },
+    {
+      "id": "svc-3",
+      "name": "Neo-Traditional Realism",
+      "description": "Bold, expressive portraits with dimensional shading",
+      "priceStarting": 400,
+      "estimatedTime": "3-5 hours",
+      "order": 3
+    },
+    {
+      "id": "svc-4",
+      "name": "Japanese Wave & Sakura",
+      "description": "Traditional Japanese aesthetics with modern execution",
+      "priceStarting": 350,
+      "estimatedTime": "3-4 hours",
+      "order": 4
+    }
+  ],
+  "pricing": [
+    {
+      "id": "price-1",
+      "size": "Small",
+      "description": "Up to 4x4 inches",
+      "price": 150,
+      "sessionDuration": "1 hour"
+    },
+    {
+      "id": "price-2",
+      "size": "Medium",
+      "description": "4x4 to 6x6 inches",
+      "price": 300,
+      "sessionDuration": "2-3 hours"
+    },
+    {
+      "id": "price-3",
+      "size": "Large",
+      "description": "6x6 inches or larger",
+      "price": 500,
+      "sessionDuration": "4-5 hours"
+    }
+  ],
+  "faqs": [
+    {
+      "id": "faq-1",
+      "question": "Does Dagi provide custom draft designs beforehand?",
+      "answer": "Absolutely. Every design is hand-crafted from scratch for your body and your concept. No stencil is ever reused — each piece is a couture original."
+    },
+    {
+      "id": "faq-2",
+      "question": "What sterilization protocols do you follow?",
+      "answer": "Hospital-grade disinfection throughout. All needles are single-use blister cartridges opened in front of you. Grip equipment is autoclave sterilized between every session."
+    },
+    {
+      "id": "faq-3",
+      "question": "How do I prepare for my session?",
+      "answer": "Sleep well the night before, stay hydrated, and avoid alcohol for 24 hours. Eat a solid carb-heavy meal 1–2 hours before your appointment to maintain stable blood sugar."
+    },
+    {
+      "id": "faq-4",
+      "question": "How is pricing determined?",
+      "answer": "Each piece is quoted individually based on size, placement, and complexity. Book a consultation and Dagi will provide a transparent fixed-price estimate before anything is confirmed."
+    }
+  ],
+  "about": {
+    "studioName": "Dagi Tattoo Atelier",
+    "tagline": "Couture Ink. Permanent Sculpture.",
+    "description": "Located in the heart of Addis Ababa, Dagi Tattoo specializes in custom, hand-crafted designs that merge art with anatomy.",
+    "foundedYear": 2018,
+    "location": "Bole Medhanialem Road, Addis Ababa",
+    "phone": "+251 911 234567",
+    "email": "bookings@dagitattoo.com",
+    "instagram": "@dagitattoo"
+  },
+  "heroBanner": {
+    "headline": "Ready to begin your piece?",
+    "subheading": "By appointment only · Addis Ababa",
+    "ctaText": "Book session",
+    "ctaSecondary": "Explore gallery",
+    "backgroundImage": null
+  },
+  "testimonials": [
+    {
+      "id": "test-1",
+      "clientName": "Eden Yosef",
+      "text": "Dagi's attention to detail is unmatched. My design exceeded every expectation.",
+      "rating": 5,
+      "date": "2026-05-20"
+    },
+    {
+      "id": "test-2",
+      "clientName": "Selam Gashaw",
+      "text": "A truly professional and comfortable experience. The healing instructions were thorough.",
+      "rating": 5,
+      "date": "2026-05-24"
+    }
+  ],
+  "blog": []
+}

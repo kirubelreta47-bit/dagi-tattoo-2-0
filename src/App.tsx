@@ -1,14 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Hero from "./components/Hero";
 import Gallery from "./components/Gallery";
 import BookingForm from "./components/BookingForm";
 import AdminDashboard from "./components/AdminDashboard";
+import { supabase } from "./lib/supabase";
 import {
   MapPin, Phone, Mail, Sparkles, ChevronDown,
   Instagram, ArrowRight, ShieldCheck, Pencil, Clock,
   Sun, Moon
 } from "lucide-react";
+
+const { VITE_LOCAL_ADMIN_EMAIL, VITE_LOCAL_ADMIN_PASSWORD, VITE_LOCAL_ADMIN_TOKEN } = (import.meta as any).env ?? {};
+const LOCAL_ADMIN_EMAIL = VITE_LOCAL_ADMIN_EMAIL || "";
+const LOCAL_ADMIN_PASSWORD = VITE_LOCAL_ADMIN_PASSWORD || "";
+const LOCAL_ADMIN_TOKEN = VITE_LOCAL_ADMIN_TOKEN || "";
 
 const homeGalleryItems = [
   {
@@ -56,18 +62,126 @@ const homeGalleryItems = [
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"atelier" | "gallery" | "booking" | "admin">("atelier");
+  const [activeTab, setActiveTab] = useState<"atelier" | "gallery" | "booking">("atelier");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [initialGallerySelection, setInitialGallerySelection] = useState<{ styleName: string; itemId: string } | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminError, setAdminError] = useState("");
+  const [session, setSession] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
   const isDark = theme === "dark";
 
   const goTo = (tab: typeof activeTab) => {
     setActiveTab(tab);
+    setIsAdminMode(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const handleAdminLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    setAdminError("");
+    setAuthLoading(true);
+
+    try {
+      if (adminEmail === LOCAL_ADMIN_EMAIL && adminPassword === LOCAL_ADMIN_PASSWORD) {
+        const authSession = { access_token: LOCAL_ADMIN_TOKEN };
+        setSession(authSession);
+        setIsAdminAuthenticated(true);
+        setIsAdminMode(true);
+        setAdminError("");
+        setAdminEmail("");
+        setAdminPassword("");
+        setRefreshTrigger((p) => p + 1);
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: adminEmail,
+        password: adminPassword,
+      });
+
+      if (error) {
+        setAdminError(error.message);
+        return;
+      }
+
+      const authSession = data.session;
+      if (!authSession) {
+        setAdminError("Unable to sign in. Please verify credentials.");
+        return;
+      }
+
+      setSession(authSession);
+      setIsAdminAuthenticated(true);
+      setIsAdminMode(true);
+      setAdminError("");
+      setAdminEmail("");
+      setAdminPassword("");
+      setRefreshTrigger((p) => p + 1);
+    } catch (error: any) {
+      setAdminError(error?.message || "Unable to authenticate. Please try again.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleAdminLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn("Logout request failed", error);
+    }
+
+    setIsAdminAuthenticated(false);
+    setIsAdminMode(false);
+    setSession(null);
+    setAdminEmail("");
+    setAdminPassword("");
+    setAdminError("");
+    goTo("atelier");
+  };
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setIsAdminAuthenticated(Boolean(data.session));
+
+      if (data.session?.access_token) {
+        const response = await fetch("/api/admin/check", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${data.session.access_token}`,
+          },
+        });
+        if (!response.ok) {
+          setIsAdminAuthenticated(false);
+          setSession(null);
+        }
+      }
+    };
+
+    const path = window.location.pathname.toLowerCase();
+    if (path.startsWith('/admin')) {
+      setIsAdminMode(true);
+    }
+
+    initializeAuth();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setIsAdminAuthenticated(Boolean(session));
+    });
+
+    return () => authListener.subscription.unsubscribe();
+  }, []);
+
 
   const handleSelectStyle = (styleName: string, itemId: string) => {
     setInitialGallerySelection({ styleName, itemId });
@@ -100,9 +214,9 @@ export default function App() {
   ];
 
   return (
-    <div style={{ 
+    <div data-theme={theme} style={{ 
       minHeight: "100vh", 
-      background: isDark ? "#000000" : "#ffffff", 
+      background: isDark ? "#000000" : "#f7f3ef", 
       color: isDark ? "#f5f5f5" : "#121212", 
       fontFamily: "'DM Sans', sans-serif",
       transition: "background-color 0.3s ease, color 0.3s ease"
@@ -125,7 +239,7 @@ export default function App() {
         position: "sticky",
         top: 0,
         zIndex: 50,
-        background: isDark ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.9)",
+        background: isDark ? "rgba(0,0,0,0.9)" : "rgba(247,243,239,0.9)",
         backdropFilter: "blur(18px)",
         borderBottom: isDark ? "1px solid #1a1a1a" : "1px solid #e5e5e5",
         transition: "background-color 0.3s, border-bottom 0.3s"
@@ -146,7 +260,7 @@ export default function App() {
           {/* Nav */}
           <div className="flex items-center gap-2 sm:gap-4">
             <nav className="flex items-center gap-1">
-              {(["atelier", "gallery", "booking", "admin"] as const).map(tab => {
+              {(["atelier", "gallery", "booking"] as const).map(tab => {
                 const active = activeTab === tab;
                 return (
                   <button
@@ -162,12 +276,28 @@ export default function App() {
                           : "text-neutral-600 hover:text-black border border-transparent"
                     }`}
                   >
-                    {tab === "admin" && <Sparkles size={9} style={{ color: active ? (isDark ? "#000" : "#fff") : (isDark ? "#fff" : "#000") }} />}
                     {tab === "booking" ? "Book" : tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </button>
                 );
               })}
             </nav>
+
+            {/* Admin Portal Button */}
+            <button
+              onClick={() => setIsAdminMode(!isAdminMode)}
+              className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-full cursor-pointer transition-all duration-200 text-[8.5px] sm:text-[10px] font-mono tracking-wider sm:tracking-widest uppercase flex items-center gap-1 shrink-0 ${                
+                isAdminMode || isAdminAuthenticated
+                  ? isDark
+                    ? "bg-white text-black font-semibold"
+                    : "bg-black text-white font-semibold"
+                  : isDark
+                    ? "text-neutral-450 hover:text-white border border-transparent"
+                    : "text-neutral-600 hover:text-black border border-transparent"
+              }`}
+              title="Admin Portal"
+            >
+              <Sparkles size={9} style={{ color: (isAdminMode || isAdminAuthenticated) ? (isDark ? "#000" : "#fff") : (isDark ? "#fff" : "#000") }} />
+            </button>
 
             {/* Dark & Light Theme Options inside Nav bar */}
             <div className={`flex items-center gap-0.5 border rounded-full p-0.5 ${
@@ -220,7 +350,7 @@ export default function App() {
                 overflow: "hidden", 
                 borderTop: isDark ? "1px solid #222" : "1px solid #e5e5e5", 
                 borderBottom: isDark ? "1px solid #222" : "1px solid #e5e5e5", 
-                background: isDark ? "#090909" : "#ffffff", 
+                background: isDark ? "#090909" : "#f7f3ef", 
                 padding: "12px 0",
                 transition: "background 0.3s, border 0.3s"
               }}>
@@ -245,7 +375,7 @@ export default function App() {
               {/* 3 ─ GALLARY LOOKBOOK (Replaces Specialization style list) */}
               <section style={{ 
                 padding: "56px 24px", 
-                background: isDark ? "#000000" : "#ffffff",
+                background: isDark ? "#000000" : "#f7f3ef",
                 transition: "background 0.3s"
               }}>
                 <div style={{ maxWidth: 1080, margin: "0 auto" }}>
@@ -352,7 +482,7 @@ export default function App() {
               {/* 5 ─ THREE PILLARS */}
               <section style={{ 
                 padding: "88px 24px", 
-                background: isDark ? "#000000" : "#ffffff",
+                background: isDark ? "#000000" : "#f7f3ef",
                 transition: "background 0.3s"
               }}>
                 <div style={{ maxWidth: 1080, margin: "0 auto" }}>
@@ -370,7 +500,7 @@ export default function App() {
                         transition={{ delay: 0.1 + i * 0.1 }}
                         style={{ 
                           padding: "40px 36px", 
-                          background: isDark ? "#0a0a0a" : "#ffffff",
+                          background: isDark ? "#0a0a0a" : "#f7f3ef",
                           transition: "background 0.3s"
                         }}
                       >
@@ -386,7 +516,7 @@ export default function App() {
               {/* 6 ─ CTA BAND */}
               <section style={{
                 padding: "80px 24px",
-                background: isDark ? "#050505" : "#fbfbfb",
+                background: isDark ? "#050505" : "#f5f1ec",
                 borderTop: isDark ? "1px solid #1a1a1a" : "1px solid #e5e5e5",
                 borderBottom: isDark ? "1px solid #1a1a1a" : "1px solid #e5e5e5",
                 textAlign: "center",
@@ -457,7 +587,7 @@ export default function App() {
               {/* FAQ Section at bottom of Booking view */}
               <section style={{ 
                 padding: "48px 24px 88px", 
-                background: isDark ? "#000000" : "#ffffff",
+                background: isDark ? "#000000" : "#f7f3ef",
                 transition: "background 0.3s"
               }}>
                 <div style={{ maxWidth: 700, margin: "0 auto" }}>
@@ -502,10 +632,177 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ══ ADMIN ══ */}
-          {activeTab === "admin" && (
+          {/* ══ ADMIN PORTAL ══ */}
+          {isAdminMode && (
             <motion.div key="admin" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-              <AdminDashboard refreshTrigger={refreshTrigger} theme={theme} />
+              {!isAdminAuthenticated ? (
+                /* Admin Login Form */
+                <div style={{
+                  minHeight: "calc(100vh - 120px)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "40px 24px",
+                  background: isDark ? "#000000" : "#f7f3ef",
+                  transition: "background 0.3s"
+                }}>
+                  <div style={{
+                    width: "100%",
+                    maxWidth: 400,
+                    padding: "48px 32px",
+                    border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
+                    borderRadius: 8,
+                    background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+                    backdropFilter: "blur(10px)",
+                    transition: "background 0.3s, border 0.3s"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
+                      <Sparkles size={32} style={{ color: isDark ? "#ffffff" : "#000000" }} />
+                    </div>
+                    <h2 style={{
+                      fontFamily: "Georgia, serif",
+                      fontSize: 24,
+                      fontWeight: 400,
+                      textAlign: "center",
+                      marginBottom: 8,
+                      color: isDark ? "#ffffff" : "#000000"
+                    }}>
+                      Admin Portal
+                    </h2>
+                    <p style={{
+                      fontFamily: "'DM Sans', sans-serif",
+                      fontSize: 13,
+                      textAlign: "center",
+                      color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+                      marginBottom: 32,
+                      letterSpacing: "0.5px"
+                    }}>
+                      Enter your authentication key
+                    </p>
+                    <form onSubmit={handleAdminLogin} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                      <div className="space-y-4">
+                        <input
+                          type="email"
+                          value={adminEmail}
+                          onChange={(e) => setAdminEmail(e.target.value)}
+                          placeholder="admin@example.com"
+                          required
+                          style={{
+                            width: "100%",
+                            padding: "12px 16px",
+                            border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.2)",
+                            borderRadius: 4,
+                            background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+                            color: isDark ? "#ffffff" : "#000000",
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 13,
+                            transition: "border-color 0.2s, background 0.2s",
+                            outline: "none",
+                            boxSizing: "border-box"
+                          }}
+                        />
+                        <input
+                          type="password"
+                          value={adminPassword}
+                          onChange={(e) => setAdminPassword(e.target.value)}
+                          placeholder="Secure password"
+                          required
+                          style={{
+                            width: "100%",
+                            padding: "12px 16px",
+                            border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.2)",
+                            borderRadius: 4,
+                            background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+                            color: isDark ? "#ffffff" : "#000000",
+                            fontFamily: "'DM Mono', monospace",
+                            fontSize: 13,
+                            transition: "border-color 0.2s, background 0.2s",
+                            outline: "none",
+                            boxSizing: "border-box"
+                          }}
+                        />
+                      </div>
+                      {adminError && (
+                        <div style={{
+                          padding: "10px 12px",
+                          borderRadius: 4,
+                          background: "rgba(239, 68, 68, 0.1)",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
+                          color: "#ef4444",
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 11,
+                          textAlign: "center"
+                        }}>
+                          {adminError}
+                        </div>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={authLoading}
+                        style={{
+                          padding: "12px 16px",
+                          background: isDark ? "#ffffff" : "#000000",
+                          color: isDark ? "#000000" : "#ffffff",
+                          border: "none",
+                          borderRadius: 4,
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                          cursor: "pointer",
+                          opacity: authLoading ? 0.7 : 1,
+                          transition: "opacity 0.2s"
+                        }}
+                        onMouseEnter={(e) => { if (!authLoading) e.currentTarget.style.opacity = "0.85" }}
+                        onMouseLeave={(e) => { if (!authLoading) e.currentTarget.style.opacity = "1" }}
+                      >
+                        {authLoading ? "Signing in..." : "Authenticate"}
+                      </button>
+                    </form>
+                    <button
+                      onClick={() => setIsAdminMode(false)}
+                      style={{
+                        width: "100%",
+                        marginTop: 12,
+                        padding: "12px 16px",
+                        background: "transparent",
+                        color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+                        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
+                        borderRadius: 4,
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        cursor: "pointer",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)";
+                        e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)";
+                        e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Admin Dashboard */
+                <div style={{ paddingTop: 24 }}>
+                  <AdminDashboard
+                    refreshTrigger={refreshTrigger}
+                    theme={theme}
+                    isAuthenticated={true}
+                    accessToken={session?.access_token}
+                    onLogout={handleAdminLogout}
+                  />
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -514,7 +811,7 @@ export default function App() {
 
       {/* ─── FOOTER ─── */}
       <footer style={{ 
-        background: isDark ? "#050505" : "#fafafa", 
+        background: isDark ? "#050505" : "#f6f2ed", 
         borderTop: isDark ? "1px solid #1a1a1a" : "1px solid #e5e5e5", 
         padding: "56px 24px 36px", 
         position: "relative", 

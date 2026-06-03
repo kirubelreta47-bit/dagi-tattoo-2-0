@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Appointment, AppointmentStatus } from "../types";
 import { 
-  Lock, Unlock, ShieldAlert, Sparkles, Filter, 
+  Sparkles, Filter, 
   Trash2, Mail, Phone, Calendar, ClipboardList, 
   CheckCircle, Clock, Ban, Save, Search, RefreshCw, Image as ImageIcon
 } from "lucide-react";
@@ -10,14 +10,13 @@ import {
 interface AdminDashboardProps {
   refreshTrigger: number;
   theme?: "dark" | "light";
+  isAuthenticated?: boolean;
+  accessToken?: string;
+  onLogout?: () => void;
 }
 
-export default function AdminDashboard({ refreshTrigger, theme = "dark" }: AdminDashboardProps) {
+export default function AdminDashboard({ refreshTrigger, theme = "dark", isAuthenticated = true, accessToken, onLogout }: AdminDashboardProps) {
   const isDark = theme === "dark";
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passcode, setPasscode] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-  
   const [schedules, setSchedules] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,13 +25,15 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark" }: Admin
   const [savingNotesId, setSavingNotesId] = useState<string | null>(null);
   const [activeReferenceImage, setActiveReferenceImage] = useState<string | null>(null);
 
-  const MASTER_PASSCODE = "dagi2026";
-
   // Load backend schedules
+  const authHeaders = accessToken
+    ? { Authorization: `Bearer ${accessToken}` }
+    : {};
+
   const fetchSchedules = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/schedules");
+      const response = await fetch("/api/schedules", { headers: authHeaders });
       if (response.ok) {
         const data = await response.json();
         // Sort newest first
@@ -45,6 +46,8 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark" }: Admin
           initialNotes[app.id] = app.notes || "";
         });
         setEditingNotes(initialNotes);
+      } else if (response.status === 401) {
+        console.warn("Admin session invalid or expired.");
       }
     } catch (err) {
       console.error("Failed to load schedules", err);
@@ -54,27 +57,14 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark" }: Admin
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchSchedules();
-    }
-  }, [isAuthenticated, refreshTrigger]);
-
-  const handleAuthSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passcode === MASTER_PASSCODE) {
-      setIsAuthenticated(true);
-      setErrorMsg("");
-    } else {
-      setErrorMsg("Decryption authorization key error. Access Denied.");
-      setPasscode("");
-    }
-  };
+    fetchSchedules();
+  }, [refreshTrigger]);
 
   const handleStatusUpdate = async (id: string, newStatus: AppointmentStatus) => {
     try {
       const response = await fetch(`/api/schedules/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ status: newStatus })
       });
       if (response.ok) {
@@ -91,7 +81,7 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark" }: Admin
     try {
       const response = await fetch(`/api/schedules/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({ notes: editingNotes[id] })
       });
       if (response.ok) {
@@ -109,7 +99,8 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark" }: Admin
     if (!window.confirm("Are you sure you want to completely delete this booking record? This represents a irreversible catalog removal.")) return;
     try {
       const response = await fetch(`/api/schedules/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: authHeaders
       });
       if (response.ok) {
         setSchedules(schedules.filter(item => item.id !== id));
@@ -144,121 +135,44 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark" }: Admin
       <div className="absolute top-1/4 right-1/4 w-72 h-72 rounded-full bg-neutral-100/5 blur-[120px] pointer-events-none animate-pulse" />
       
       <div className="max-w-6xl mx-auto">
-        <AnimatePresence mode="wait">
-          
-          {/* SECURE PASSCODE DIAL OVERLAY SCREEN */}
-          {!isAuthenticated ? (
-            <motion.div
-              key="auth-gate"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.4 }}
-              className="max-w-md mx-auto"
-            >
-              <div className="text-center mb-8">
-                <div className={`inline-flex items-center gap-1.5 text-xs font-mono tracking-widest uppercase mb-3 font-bold ${
-                  isDark ? "text-neutral-300" : "text-black"
-                }`}>
-                  <ShieldAlert className={`w-4 h-4 ${isDark ? "text-white" : "text-black"}`} /> SYSTEM CRYPT SECURE VAULT
-                </div>
-                <h2 className={`font-serif text-2xl font-black uppercase tracking-wider ${
-                  isDark ? "text-white" : "text-black"
-                }`}>
-                  Dagi Artist Vault
-                </h2>
-                <p className={`text-[10px] font-mono tracking-wider uppercase mt-1 ${
-                  isDark ? "text-neutral-400" : "text-neutral-500"
-                }`}>
-                  Private database authorization required.
-                </p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="space-y-8"
+        >
+          {/* Header portal */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-neutral-200">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs text-black font-mono tracking-widest uppercase mb-1.5 font-bold">
+                <Sparkles className="w-3.5 h-3.5 text-black" /> DECRYPTED SYSTEM CORE
               </div>
+              <h1 className="font-serif text-3xl font-extrabold text-black uppercase tracking-wider">
+                Dagi's <span className="text-black">Calendar Vault</span>
+              </h1>
+            </div>
 
-              {/* Padlock form */}
-              <form onSubmit={handleAuthSubmit} className={`rounded p-6 md:p-8 shadow-sm text-center space-y-6 border transition-colors duration-300 ${
-                isDark ? "bg-neutral-950 border-neutral-800 text-white" : "bg-white border-neutral-200 text-black"
-              }`}>
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto border ${
-                  isDark ? "bg-neutral-900 border-neutral-850" : "bg-neutral-50 border-neutral-200"
-                }`}>
-                  <Lock className={`w-5 h-5 ${isDark ? "text-white" : "text-black"}`} />
-                </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={fetchSchedules}
+                disabled={loading}
+                className="p-2.5 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-black text-neutral-600 hover:text-black rounded transition-colors duration-300 flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-black" : ""}`} />
+                <span>Synchronize</span>
+              </button>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] text-neutral-550 uppercase font-mono tracking-widest block">
-                    Enter Decryption Passkey
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={passcode}
-                    onChange={(e) => setPasscode(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full text-center tracking-[0.4em] bg-white border border-neutral-200 focus:border-black focus:ring-0 outline-none pb-2 pt-3 text-lg text-black rounded font-serif shadow-inner"
-                  />
-                  <span className="block text-[10px] text-neutral-600 font-mono tracking-wide pt-1.5 bg-neutral-50 py-2 border border-neutral-200 rounded px-2">
-                    Hint: Use master passcode <strong className="font-sans font-extrabold underline text-black">dagi2026</strong> to decrypt.
-                  </span>
-                </div>
-
-                {errorMsg && (
-                  <div className="p-3 bg-red-50 border border-red-200 text-red-650 rounded text-[11px] font-mono text-center leading-relaxed">
-                    {errorMsg}
-                  </div>
-                )}
-
+              {onLogout && (
                 <button
-                  type="submit"
-                  id="decrypt-vault-btn"
-                  className="w-full py-3 bg-black hover:bg-neutral-800 text-white font-extrabold text-xs tracking-widest uppercase transition-colors rounded-sm cursor-pointer flex items-center justify-center gap-1.5 duration-300"
+                  onClick={onLogout}
+                  className="px-4 py-2.5 bg-red-50 hover:bg-red-105 text-red-650 border border-red-200 hover:border-red-400 rounded text-xs uppercase tracking-wider font-mono cursor-pointer"
                 >
-                  <Unlock className="w-3.5 h-3.5" /> Decrypt Studio Vault
+                  Lock Vault
                 </button>
-              </form>
-            </motion.div>
-          ) : (
-            
-            /* DECRYPTED CRYPT DASHBOARD */
-            <motion.div
-              key="admin-content"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-8"
-            >
-              {/* Header portal */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-neutral-200">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 text-xs text-black font-mono tracking-widest uppercase mb-1.5 font-bold">
-                    <Sparkles className="w-3.5 h-3.5 text-black" /> DECRYPTED SYSTEM CORE
-                  </div>
-                  <h1 className="font-serif text-3xl font-extrabold text-black uppercase tracking-wider">
-                    Dagi's <span className="text-black">Calendar Vault</span>
-                  </h1>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button 
-                    onClick={fetchSchedules}
-                    disabled={loading}
-                    className="p-2.5 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-black text-neutral-600 hover:text-black rounded transition-colors duration-300 flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono cursor-pointer"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-black" : ""}`} />
-                    <span>Synchronize</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setIsAuthenticated(false);
-                      setPasscode("");
-                    }}
-                    className="px-4 py-2.5 bg-red-50 hover:bg-red-105 text-red-650 border border-red-200 hover:border-red-400 rounded text-xs uppercase tracking-wider font-mono cursor-pointer"
-                  >
-                    Lock Vault
-                  </button>
-                </div>
-              </div>
+              )}
+            </div>
+          </div>
 
               {/* Metrics Grid Cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-black">
@@ -579,10 +493,7 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark" }: Admin
                 )}
               </div>
 
-            </motion.div>
-          )}
-
-        </AnimatePresence>
+        </motion.div>
       </div>
 
       {/* Uploaded custom stencil image lightbox zoomed view */}
