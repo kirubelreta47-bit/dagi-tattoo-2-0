@@ -37,9 +37,6 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const SUPABASE_ADMIN_EMAIL = process.env.SUPABASE_ADMIN_EMAIL || "";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
 
 const placeholderValues = [
   "https://your-project-ref.supabase.co",
@@ -48,18 +45,10 @@ const placeholderValues = [
   "admin@example.com"
 ];
 
-const USE_SUPABASE = Boolean(
-  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && SUPABASE_ADMIN_EMAIL &&
-  !placeholderValues.includes(SUPABASE_URL) &&
-  !placeholderValues.includes(SUPABASE_SERVICE_ROLE_KEY) &&
-  !placeholderValues.includes(SUPABASE_ADMIN_EMAIL)
-);
-
-const USE_LOCAL_ADMIN = Boolean(ADMIN_EMAIL && ADMIN_PASSWORD && ADMIN_TOKEN);
-
-if (!USE_SUPABASE && !USE_LOCAL_ADMIN) {
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ADMIN_EMAIL ||
+    placeholderValues.includes(SUPABASE_URL) || placeholderValues.includes(SUPABASE_SERVICE_ROLE_KEY) || placeholderValues.includes(SUPABASE_ADMIN_EMAIL)) {
   throw new Error(
-    "Missing admin setup. Set either SUPABASE_* variables for Supabase auth or ADMIN_* variables for local admin auth in .env."
+    "Invalid Supabase environment variables. Replace the placeholder values in .env with your real Supabase project URL, service role key, and admin email."
   );
 }
 
@@ -129,15 +118,6 @@ async function verifyAdminAuth(req: express.Request, res: express.Response): Pro
   }
 
   const token = authHeader.split(" ")[1];
-  if (USE_LOCAL_ADMIN && token === ADMIN_TOKEN) {
-    return true;
-  }
-
-  if (!USE_SUPABASE) {
-    res.status(401).json({ authenticated: false, error: "Unauthorized" });
-    return false;
-  }
-
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user || data.user.email !== SUPABASE_ADMIN_EMAIL) {
     res.status(401).json({ authenticated: false, error: "Unauthorized" });
@@ -160,20 +140,16 @@ async function startServer() {
       return;
     }
 
-    if (USE_SUPABASE) {
-      const { data, error } = await supabase
-        .from('schedules')
-        .select('*')
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('schedules')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-
-      return res.json((data || []).map(mapAppointmentRecord));
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
 
-    res.json(loadSchedules());
+    res.json((data || []).map(mapAppointmentRecord));
   });
 
   app.post('/api/schedules', async (req, res) => {
@@ -184,64 +160,36 @@ async function startServer() {
 
     const record = {
       id: randomUUID(),
-      clientName: data.clientName,
-      clientEmail: data.clientEmail || '',
-      clientPhone: data.clientPhone,
-      styleSelectionType: data.styleSelectionType || 'gallery',
-      selectedGalleryItemId: data.selectedGalleryItemId || '',
-      tatStyle: data.tatStyle || 'Custom Tattoo',
+      client_name: data.clientName,
+      client_email: data.clientEmail || '',
+      client_phone: data.clientPhone,
+      style_selection_type: data.styleSelectionType || 'gallery',
+      selected_gallery_item_id: data.selectedGalleryItemId || '',
+      tat_style: data.tatStyle || 'Custom Tattoo',
       placement: data.placement || 'Forearm',
       size: data.size || 'Medium',
       description: data.description || '',
       date: data.date,
-      timeSlot: data.timeSlot || '11:00 AM',
+      time_slot: data.timeSlot || '11:00 AM',
       status: 'pending',
-      hasPriorTattoo: data.hasPriorTattoo ?? false,
-      skinTone: data.skinTone || '',
-      uploadedImage: data.uploadedImage || '',
+      has_prior_tattoo: data.hasPriorTattoo ?? false,
+      skin_tone: data.skinTone || '',
+      uploaded_image: data.uploadedImage || '',
       notes: data.notes || '',
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     };
 
-    if (USE_SUPABASE) {
-      const dbRecord = {
-        id: record.id,
-        client_name: record.clientName,
-        client_email: record.clientEmail,
-        client_phone: record.clientPhone,
-        style_selection_type: record.styleSelectionType,
-        selected_gallery_item_id: record.selectedGalleryItemId,
-        tat_style: record.tatStyle,
-        placement: record.placement,
-        size: record.size,
-        description: record.description,
-        date: record.date,
-        time_slot: record.timeSlot,
-        status: record.status,
-        has_prior_tattoo: record.hasPriorTattoo,
-        skin_tone: record.skinTone,
-        uploaded_image: record.uploadedImage,
-        notes: record.notes,
-        created_at: record.createdAt,
-      };
+    const { data: inserted, error } = await supabase
+      .from('schedules')
+      .insert([record])
+      .select()
+      .single();
 
-      const { data: inserted, error } = await supabase
-        .from('schedules')
-        .insert([dbRecord])
-        .select()
-        .single();
-
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-
-      return res.status(201).json(mapAppointmentRecord(inserted));
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
 
-    const schedules = loadSchedules();
-    schedules.unshift(record);
-    saveSchedules(schedules);
-    res.status(201).json(record);
+    res.status(201).json(mapAppointmentRecord(inserted));
   });
 
   app.put('/api/schedules/:id', async (req, res) => {
@@ -256,34 +204,22 @@ async function startServer() {
     if (status) updateFields.status = status;
     if (notes !== undefined) updateFields.notes = notes;
 
-    if (USE_SUPABASE) {
-      const { data: updated, error } = await supabase
-        .from('schedules')
-        .update(updateFields)
-        .eq('id', id)
-        .select()
-        .single();
+    const { data: updated, error } = await supabase
+      .from('schedules')
+      .update(updateFields)
+      .eq('id', id)
+      .select()
+      .single();
 
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-
-      if (!updated) {
-        return res.status(404).json({ error: 'Schedule not found' });
-      }
-
-      return res.json(mapAppointmentRecord(updated));
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
 
-    const schedules = loadSchedules();
-    const index = schedules.findIndex((item) => item.id === id);
-    if (index === -1) {
+    if (!updated) {
       return res.status(404).json({ error: 'Schedule not found' });
     }
 
-    schedules[index] = { ...schedules[index], ...updateFields };
-    saveSchedules(schedules);
-    res.json(schedules[index]);
+    res.json(mapAppointmentRecord(updated));
   });
 
   app.delete('/api/schedules/:id', async (req, res) => {
@@ -292,26 +228,15 @@ async function startServer() {
     }
 
     const { id } = req.params;
-    if (USE_SUPABASE) {
-      const { error } = await supabase
-        .from('schedules')
-        .delete()
-        .eq('id', id);
+    const { error } = await supabase
+      .from('schedules')
+      .delete()
+      .eq('id', id);
 
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-
-      return res.json({ success: true });
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
 
-    const schedules = loadSchedules();
-    const filtered = schedules.filter((item) => item.id !== id);
-    if (filtered.length === schedules.length) {
-      return res.status(404).json({ error: 'Schedule not found' });
-    }
-
-    saveSchedules(filtered);
     res.json({ success: true });
   });
 

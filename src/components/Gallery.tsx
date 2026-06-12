@@ -23,32 +23,37 @@ export default function Gallery({ onSelectStyle, theme = "dark" }: GalleryProps)
   return (
     <section 
       id="gallery-section" 
-      className={`py-16 md:py-24 border-b px-4 transition-colors duration-300 ${
-        isDark ? "bg-black text-white border-neutral-800" : "bg-white text-black border-neutral-100"
-      }`}
+      className="py-24 md:py-32 px-6 sm:px-8 lg:px-12 border-b border-white/8"
     >
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <div className={`inline-flex items-center gap-1.5 text-xs font-mono tracking-widest uppercase mb-3 font-bold ${
-            isDark ? "text-neutral-300" : "text-black"
-          }`}>
-            <Sparkles className={`w-3.5 h-3.5 ${isDark ? "text-white" : "text-black"}`} />
-            Live Catalog
-          </div>
-          <h2 className="font-serif text-2xl md:text-3xl font-bold tracking-wide uppercase">
-            Signature Shading Portfolio
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <p className="text-xs uppercase tracking-[0.35em] text-[#C79A5D] mb-6 font-semibold">
+            Signature Tattoo Portfolio
+          </p>
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-[var(--text-main)] mb-6">
+            Master Ink Gallery
           </h2>
-          <div className={`w-12 h-[1px] mx-auto mt-4 ${isDark ? "bg-white/10" : "bg-black/10"}`} />
-        </div>
+          <div className="w-16 h-px bg-gradient-to-r from-transparent via-[#C79A5D] to-transparent mx-auto" />
+        </motion.div>
 
         {/* Filter Navigation */}
-        <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-10">
-          <div className={`flex items-center gap-2 pr-2 text-xs font-mono uppercase tracking-wider hidden sm:flex ${
-            isDark ? "text-neutral-400" : "text-neutral-500"
-          }`}>
-            <Filter className={`w-3 h-3 ${isDark ? "text-white" : "text-black"}`} /> Filter By:
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="flex flex-wrap items-center justify-center gap-3 mb-16"
+        >
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#B8B8B8] hidden sm:flex">
+            <Filter className="w-4 h-4" /> Filter By:
           </div>
           {categories.map((category) => {
             const active = selectedCategory === category;
@@ -56,73 +61,64 @@ export default function Gallery({ onSelectStyle, theme = "dark" }: GalleryProps)
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 text-xs uppercase tracking-widest rounded transition-all duration-300 font-mono cursor-pointer border ${
+                className={`px-6 py-2.5 text-xs uppercase tracking-widest rounded transition-all duration-300 font-semibold border ${
                   active
-                    ? isDark
-                      ? "bg-white text-black font-extrabold border-white"
-                      : "bg-black text-white font-extrabold border-black"
-                    : isDark
-                      ? "bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-white hover:bg-neutral-800"
-                      : "bg-neutral-50 text-neutral-600 hover:text-black hover:bg-neutral-100 border-neutral-200"
+                    ? "bg-[#C79A5D] text-[#181818] border-[#C79A5D] shadow-lg"
+                    : "bg-transparent text-[#B8B8B8] border-white/20 hover:border-[#C79A5D] hover:text-[#C79A5D]"
                 }`}
               >
                 {category}
               </button>
             );
           })}
-        </div>
+        </motion.div>
 
         {/* Grid Display */}
         <motion.div 
           layout
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
         >
           <AnimatePresence mode="popLayout">
-            {filteredItems.map((item) => (
+            {filteredItems.map((item, idx) => (
               <motion.div
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.05 }}
                 key={item.id}
-                className={`group relative border rounded overflow-hidden aspect-[3/4] cursor-pointer transition-colors ${
-                  isDark 
-                    ? "bg-neutral-950 border-neutral-800 hover:border-white" 
-                    : "bg-white border-neutral-200 hover:border-black"
-                }`}
+                className="gallery-preview-card group min-h-[260px]"
                 onClick={() => setSelectedImage(item)}
               >
-                {/* Ink image */}
                 <img
                   src={item.src}
                   alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                  className="gallery-preview-image"
                   referrerPolicy="no-referrer"
                 />
 
-                {/* Cyber Hover Grid Accent Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5" />
+                <div className="gallery-preview-shade" />
 
-                {/* Content over image on hover */}
-                <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
-                  <span className="inline-block px-1.5 py-0.5 rounded bg-white text-black text-[7px] sm:text-[9px] font-bold uppercase tracking-wider font-mono mb-1.5 sm:mb-2">
+                <div className="gallery-preview-content pointer-events-none">
+                  <span className="gallery-preview-tag">
                     {item.category}
                   </span>
                   
-                  <h3 className="font-serif text-xs sm:text-base text-white font-medium tracking-wide leading-tight">
+                  <h3 className="gallery-preview-title">
                     {item.title}
                   </h3>
                   
-                  <p className="text-[8px] sm:text-[10px] text-neutral-300 font-mono mt-1 uppercase">
+                  <p className="gallery-preview-action">
                     {item.placement}
                   </p>
                 </div>
 
-                {/* Expand Indicator Icon */}
-                <div className="absolute top-4 right-4 bg-white/95 p-2 border border-neutral-200 text-black rounded opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100">
-                  <Maximize2 className="w-3.5 h-3.5 text-black" />
-                </div>
+                <motion.div 
+                  className="absolute top-4 right-4 z-10 bg-[#C79A5D] p-2 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-100 scale-75"
+                  whileHover={{ scale: 1.1 }}
+                >
+                  <Maximize2 className="w-4 h-4 text-[#181818]" />
+                </motion.div>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -130,10 +126,8 @@ export default function Gallery({ onSelectStyle, theme = "dark" }: GalleryProps)
 
         {/* Empty State */}
         {filteredItems.length === 0 && (
-          <div className={`text-center py-16 font-mono text-sm max-w-xs mx-auto border border-dashed rounded p-8 ${
-            isDark ? "text-neutral-400 border-neutral-800" : "text-neutral-500 border-neutral-200"
-          }`}>
-            No custom inks on display for this collection yet. Check again soon.
+          <div className="text-center py-20 font-mono text-sm max-w-xs mx-auto border border-dashed border-white/20 rounded-lg p-10 bg-white/5">
+            <p className="text-[#B8B8B8]">No custom inks on display for this collection yet. Check again soon.</p>
           </div>
         )}
 
@@ -147,65 +141,57 @@ export default function Gallery({ onSelectStyle, theme = "dark" }: GalleryProps)
               className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto"
               onClick={() => setSelectedImage(null)}
             >
-              <div 
-                className={`border max-w-3xl w-full rounded flex flex-col md:flex-row overflow-hidden relative transition-colors duration-300 ${
-                  isDark ? "bg-neutral-900 border-neutral-800 text-white" : "bg-white border-neutral-200 text-black"
-                }`}
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-[#252525] border border-white/10 max-w-4xl w-full rounded-lg flex flex-col lg:flex-row overflow-hidden relative"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Close Button */}
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1, rotate: 90 }}
                   onClick={() => setSelectedImage(null)}
-                  className={`absolute top-4 right-4 p-2 rounded border z-10 transition-colors cursor-pointer ${
-                    isDark 
-                      ? "bg-neutral-800/90 text-neutral-200 border-neutral-700 hover:border-white" 
-                      : "bg-white/90 text-neutral-800 border-neutral-200 hover:border-black"
-                  }`}
+                  className="absolute top-6 right-6 p-2 rounded-lg bg-[#C79A5D] text-[#181818] z-10 transition-colors cursor-pointer hover:bg-[#d4a965]"
                 >
-                  <X className="w-4 h-4" />
-                </button>
+                  <X className="w-5 h-5" />
+                </motion.button>
 
                 {/* Left Side: Image */}
-                <div className="md:w-1/2 aspect-[3/4] max-h-[70vh] bg-black">
-                  <img
+                <div className="lg:w-1/2 aspect-[3/4] max-h-[70vh] bg-black overflow-hidden rounded-l-lg">
+                  <motion.img
                     src={selectedImage.src}
                     alt={selectedImage.title}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
+                    layoutId={`image-${selectedImage.id}`}
                   />
                 </div>
 
-                {/* Right Side: Details description */}
-                <div className="md:w-1/2 p-6 md:p-8 flex flex-col justify-center">
-                  <div className="mb-4">
-                    <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-widest font-mono border ${
-                      isDark 
-                        ? "bg-neutral-800 text-neutral-200 border-neutral-700" 
-                        : "bg-neutral-100 text-neutral-800 border-neutral-200"
-                    }`}>
-                      {selectedImage.category} Collection
+                {/* Right Side: Details */}
+                <div className="lg:w-1/2 p-8 lg:p-10 flex flex-col justify-center">
+                  <div className="mb-6">
+                    <span className="px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest font-mono bg-[#C79A5D] text-[#181818]">
+                      {selectedImage.category}
                     </span>
                   </div>
                   
-                  <h3 className="font-serif text-xl md:text-2xl font-bold tracking-wide leading-tight mb-2 uppercase">
+                  <h3 className="text-3xl font-black tracking-tight text-[#F5F2EC] mb-6 leading-tight">
                     {selectedImage.title}
                   </h3>
                   
-                  <div className={`font-mono text-xs mb-4 flex flex-col gap-1 uppercase tracking-wide ${
-                    isDark ? "text-neutral-300" : "text-neutral-700"
-                  }`}>
-                    <div><span className={isDark ? "text-neutral-500" : "text-neutral-400"}>Artist:</span> Dagi Master Inks</div>
-                    <div><span className={isDark ? "text-neutral-500" : "text-neutral-400"}>Placement:</span> {selectedImage.placement}</div>
-                    <div><span className={isDark ? "text-neutral-500" : "text-neutral-400"}>Format:</span> Circular Needle Vector Custom</div>
+                  <div className="font-mono text-xs mb-8 flex flex-col gap-3 uppercase tracking-wide text-[#B8B8B8]">
+                    <div><span className="text-[#C79A5D] font-semibold">Artist:</span> Dagi Master Inks</div>
+                    <div><span className="text-[#C79A5D] font-semibold">Placement:</span> {selectedImage.placement}</div>
+                    <div><span className="text-[#C79A5D] font-semibold">Format:</span> Custom Vector Design</div>
                   </div>
                   
-                  <p className={`text-xs md:text-sm leading-relaxed mb-6 font-sans border-t pt-4 ${
-                    isDark ? "text-neutral-300 border-neutral-800" : "text-neutral-600 border-neutral-100"
-                  }`}>
+                  <p className="text-sm leading-relaxed mb-10 font-sans border-t border-white/10 pt-8 text-[#B8B8B8]">
                     {selectedImage.description}
                   </p>
                   
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2 }}
                     onClick={() => {
                       if (onSelectStyle) {
                         onSelectStyle(selectedImage.title, selectedImage.id);
@@ -215,16 +201,12 @@ export default function Gallery({ onSelectStyle, theme = "dark" }: GalleryProps)
                       }
                       setSelectedImage(null);
                     }}
-                    className={`w-full py-3 font-extrabold text-xs tracking-widest uppercase transition-colors rounded-sm cursor-pointer duration-300 ${
-                      isDark 
-                        ? "bg-white hover:bg-neutral-200 text-black" 
-                        : "bg-black hover:bg-neutral-850 text-white"
-                    }`}
+                    className="w-full py-3.5 font-bold text-sm tracking-widest uppercase transition-all rounded-lg duration-300 bg-[#C79A5D] hover:bg-[#d4a965] text-[#181818] shadow-lg hover:shadow-xl cursor-pointer"
                   >
                     Select & Book This Style
-                  </button>
+                  </motion.button>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

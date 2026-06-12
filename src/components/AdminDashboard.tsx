@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Appointment, AppointmentStatus } from "../types";
 import { 
   Sparkles, Filter, 
   Trash2, Mail, Phone, Calendar, ClipboardList, 
-  CheckCircle, Clock, Ban, Save, Search, RefreshCw, Image as ImageIcon
+  CheckCircle, Clock, Ban, Save, Search, RefreshCw, Bell, Download
 } from "lucide-react";
 
 interface AdminDashboardProps {
@@ -24,21 +24,53 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark", isAuthe
   const [editingNotes, setEditingNotes] = useState<{ [id: string]: string }>({});
   const [savingNotesId, setSavingNotesId] = useState<string | null>(null);
   const [activeReferenceImage, setActiveReferenceImage] = useState<string | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    typeof Notification !== "undefined" ? Notification.permission : "default"
+  );
+  const knownScheduleIdsRef = useRef<Set<string>>(new Set());
+  const hasLoadedOnceRef = useRef(false);
 
   // Load backend schedules
   const authHeaders = accessToken
     ? { Authorization: `Bearer ${accessToken}` }
     : {};
 
-  const fetchSchedules = async () => {
-    setLoading(true);
+  const notifyNewBooking = (appointment: Appointment) => {
+    const title = "New Dagi Tattoo booking";
+    const body = `${appointment.clientName} requested ${appointment.date} at ${appointment.timeSlot}.`;
+
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      new Notification(title, {
+        body,
+        icon: "/image/tattoo_1_virgin_mary.png",
+        badge: "/image/tattoo_1_virgin_mary.png",
+        tag: `booking-${appointment.id}`,
+      });
+    }
+  };
+
+  const fetchSchedules = async (options: { silent?: boolean } = {}) => {
+    if (!options.silent) {
+      setLoading(true);
+    }
     try {
       const response = await fetch("/api/schedules", { headers: authHeaders });
       if (response.ok) {
         const data = await response.json();
         // Sort newest first
         data.sort((a: Appointment, b: Appointment) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        const incomingIds = new Set<string>(data.map((app: Appointment) => app.id));
+        if (hasLoadedOnceRef.current) {
+          data
+            .filter((app: Appointment) => !knownScheduleIdsRef.current.has(app.id))
+            .forEach((app: Appointment) => notifyNewBooking(app));
+        }
+
         setSchedules(data);
+        knownScheduleIdsRef.current = incomingIds;
+        hasLoadedOnceRef.current = true;
         
         // Populate local editing state for notes
         const initialNotes: { [id: string]: string } = {};
@@ -52,13 +84,61 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark", isAuthe
     } catch (err) {
       console.error("Failed to load schedules", err);
     } finally {
-      setLoading(false);
+      if (!options.silent) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     fetchSchedules();
   }, [refreshTrigger]);
+
+  useEffect(() => {
+    if ((window as any).__dagiInstallPrompt) {
+      setInstallPrompt((window as any).__dagiInstallPrompt);
+    }
+
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      (window as any).__dagiInstallPrompt = event;
+      setInstallPrompt(event);
+    };
+    const handleInstallReady = () => {
+      setInstallPrompt((window as any).__dagiInstallPrompt);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("dagi-install-ready", handleInstallReady);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("dagi-install-ready", handleInstallReady);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken) return;
+
+    const interval = window.setInterval(() => {
+      fetchSchedules({ silent: true });
+    }, 30000);
+
+    return () => window.clearInterval(interval);
+  }, [isAuthenticated, accessToken]);
+
+  const handleInstallApp = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    (window as any).__dagiInstallPrompt = null;
+    setInstallPrompt(null);
+  };
+
+  const handleEnableNotifications = async () => {
+    if (typeof Notification === "undefined") return;
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+  };
 
   const handleStatusUpdate = async (id: string, newStatus: AppointmentStatus) => {
     try {
@@ -154,8 +234,28 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark", isAuthe
             </div>
 
             <div className="flex items-center gap-3">
+              {installPrompt && (
+                <button
+                  onClick={handleInstallApp}
+                  className="p-2.5 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-black text-neutral-600 hover:text-black rounded transition-colors duration-300 flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Install App</span>
+                </button>
+              )}
+
+              {typeof Notification !== "undefined" && notificationPermission !== "granted" && (
+                <button
+                  onClick={handleEnableNotifications}
+                  className="p-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 hover:border-amber-400 text-amber-800 rounded transition-colors duration-300 flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono cursor-pointer"
+                >
+                  <Bell className="w-3.5 h-3.5" />
+                  <span>Enable Alerts</span>
+                </button>
+              )}
+
               <button 
-                onClick={fetchSchedules}
+                onClick={() => fetchSchedules()}
                 disabled={loading}
                 className="p-2.5 bg-white hover:bg-neutral-50 border border-neutral-200 hover:border-black text-neutral-600 hover:text-black rounded transition-colors duration-300 flex items-center gap-1.5 text-xs uppercase tracking-wider font-mono cursor-pointer"
               >
@@ -241,8 +341,8 @@ export default function AdminDashboard({ refreshTrigger, theme = "dark", isAuthe
                       onClick={() => setStatusFilter(filter)}
                       className={`px-3 py-1.5 rounded text-[10px] font-mono uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
                         statusFilter === filter
-                          ? "bg-black text-white font-semibold"
-                          : "bg-transparent text-neutral-500 hover:text-black hover:bg-neutral-100 border border-transparent"
+                          ? "bg-gold text-white font-semibold"
+                          : "bg-transparent text-neutral-500 hover:text-gold hover:bg-neutral-100 border border-transparent"
                       }`}
                     >
                       {filter}

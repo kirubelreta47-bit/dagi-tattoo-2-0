@@ -19,45 +19,45 @@ const LOCAL_ADMIN_TOKEN = VITE_LOCAL_ADMIN_TOKEN || "";
 const homeGalleryItems = [
   {
     id: "tat-1",
-    src: "/src/assets/images/celestial_geometric_tattoo_1779697256322.png",
-    title: "Celestial Constellation Alignment",
-    category: "Geometric",
-    styleName: "Celestial & Geometric"
+    src: "/image/tattoo_1_virgin_mary.png",
+    title: "Virgin Mary Devotional Tattoo",
+    category: "Religious",
+    styleName: "Sacred Realism"
   },
   {
     id: "tat-2",
-    src: "/src/assets/images/floral_ornamental_tattoo_1779697274753.png",
-    title: "Decadent Ornamental Rose Scroll",
-    category: "Fine-Line",
-    styleName: "Fine-Line Florals"
+    src: "/image/tattoo_2_lion_sleeve.png",
+    title: "Lion Sleeve Masterpiece",
+    category: "Realism",
+    styleName: "Heroic Sleeve"
   },
   {
     id: "tat-3",
-    src: "/src/assets/images/lion_geometric_tattoo_1779697294632.png",
-    title: "Sovereign Crowned Lion Portrait",
-    category: "Realism",
-    styleName: "Neo-Traditional Realism"
+    src: "/image/tattoo_3_madonna.png",
+    title: "Madonna Portrait Ink",
+    category: "Sacred",
+    styleName: "Iconic Portrait"
   },
   {
     id: "tat-4",
-    src: "/src/assets/images/wave_cherry_blossom_tattoo_1779697314659.png",
-    title: "Japanese Brushstroke Wave & Sakura",
-    category: "Japanese",
-    styleName: "Japanese Wave & Sakura"
+    src: "/image/tattoo_4_brother.png",
+    title: "Brotherhood Memorial Tattoo",
+    category: "Memorial",
+    styleName: "Memory & Honor"
   },
   {
     id: "tat-5",
-    src: "/src/assets/images/gothic_skull_tattoo_1779785081844.png",
-    title: "Gothic Skull & Rose",
-    category: "Custom",
-    styleName: "Custom Script & Tiny Typography"
+    src: "/image/1ES6t.jpg",
+    title: "Bold Linework Composition",
+    category: "Blackwork",
+    styleName: "Graphic Contrast"
   },
   {
     id: "tat-6",
-    src: "/src/assets/images/swallow_bird_tattoo_1779785104583.png",
-    title: "Minimalist Flying Swallow",
+    src: "/image/CQSZ6.jpg",
+    title: "Modern Fine-Line Detail",
     category: "Fine-Line",
-    styleName: "Custom Script & Tiny Typography"
+    styleName: "Minimalist Geometry"
   }
 ];
 
@@ -67,6 +67,7 @@ export default function App() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [initialGallerySelection, setInitialGallerySelection] = useState<{ styleName: string; itemId: string } | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
@@ -80,6 +81,9 @@ export default function App() {
   const goTo = (tab: typeof activeTab) => {
     setActiveTab(tab);
     setIsAdminMode(false);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", `#${tab}`);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -148,6 +152,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 24);
     const initializeAuth = async () => {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
@@ -172,14 +177,24 @@ export default function App() {
       setIsAdminMode(true);
     }
 
+    const hash = window.location.hash.replace('#', '').toLowerCase();
+    if (hash === 'gallery' || hash === 'booking' || hash === 'atelier') {
+      setActiveTab(hash as typeof activeTab);
+    }
+
     initializeAuth();
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setIsAdminAuthenticated(Boolean(session));
     });
 
-    return () => authListener.subscription.unsubscribe();
+    return () => {
+      authListener.subscription.unsubscribe();
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
 
@@ -208,16 +223,16 @@ export default function App() {
   ];
 
   const pillars = [
-    { icon: <Pencil size={18} style={{ color: isDark ? "#ffffff" : "#000000" }} />, title: "Custom Only", body: "Every design originates from your body and your concept. No flash. No stencil reuse. No exceptions." },
-    { icon: <ShieldCheck size={18} style={{ color: isDark ? "#ffffff" : "#000000" }} />, title: "Clinical Sterility", body: "Single-use needles opened in front of you. Autoclave-sterilized grips. Hospital-grade protocols on every session." },
-    { icon: <Clock size={18} style={{ color: isDark ? "#ffffff" : "#000000" }} />, title: "Considered Pacing", body: "Sessions are never rushed. The work dictates the time — not a clock. Quality is the only deadline." },
+    { icon: <Pencil size={18} style={{ color: "#F5F5F5" }} />, title: "Custom Only", body: "Every design originates from your body and your concept. No flash. No stencil reuse. No exceptions." },
+    { icon: <ShieldCheck size={18} style={{ color: "#F5F5F5" }} />, title: "Clinical Sterility", body: "Single-use needles opened in front of you. Autoclave-sterilized grips. Hospital-grade protocols on every session." },
+    { icon: <Clock size={18} style={{ color: "#F5F5F5" }} />, title: "Considered Pacing", body: "Sessions are never rushed. The work dictates the time — not a clock. Quality is the only deadline." },
   ];
 
   return (
     <div data-theme={theme} style={{ 
       minHeight: "100vh", 
-      background: isDark ? "#000000" : "#f7f3ef", 
-      color: isDark ? "#f5f5f5" : "#121212", 
+      background: "var(--color-bg)", 
+      color: "var(--text-main)", 
       fontFamily: "'DM Sans', sans-serif",
       transition: "background-color 0.3s ease, color 0.3s ease"
     }}>
@@ -235,15 +250,7 @@ export default function App() {
       }} />
 
       {/* ─── HEADER ─── */}
-      <header style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-        background: isDark ? "rgba(0,0,0,0.9)" : "rgba(247,243,239,0.9)",
-        backdropFilter: "blur(18px)",
-        borderBottom: isDark ? "1px solid #1a1a1a" : "1px solid #e5e5e5",
-        transition: "background-color 0.3s, border-bottom 0.3s"
-      }}>
+      <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? "nav-solid" : "nav-transparent"}`}>
         <div className="max-w-[1080px] mx-auto px-4 sm:px-6 h-[60px] flex items-center justify-between gap-2 sm:gap-4">
 
           {/* Wordmark */}
@@ -268,12 +275,8 @@ export default function App() {
                     onClick={() => goTo(tab)}
                     className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-full cursor-pointer transition-all duration-200 text-[8.5px] sm:text-[10px] font-mono tracking-wider sm:tracking-widest uppercase flex items-center gap-1 shrink-0 ${
                       active 
-                        ? isDark
-                          ? "bg-white text-black font-semibold"
-                          : "bg-black text-white font-semibold"
-                        : isDark
-                          ? "text-neutral-450 hover:text-white border border-transparent"
-                          : "text-neutral-600 hover:text-black border border-transparent"
+                          ? "bg-gold text-black font-semibold"
+                          : "text-muted hover:text-primary border border-transparent"
                     }`}
                   >
                     {tab === "booking" ? "Book" : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -287,16 +290,12 @@ export default function App() {
               onClick={() => setIsAdminMode(!isAdminMode)}
               className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-full cursor-pointer transition-all duration-200 text-[8.5px] sm:text-[10px] font-mono tracking-wider sm:tracking-widest uppercase flex items-center gap-1 shrink-0 ${                
                 isAdminMode || isAdminAuthenticated
-                  ? isDark
-                    ? "bg-white text-black font-semibold"
-                    : "bg-black text-white font-semibold"
-                  : isDark
-                    ? "text-neutral-450 hover:text-white border border-transparent"
-                    : "text-neutral-600 hover:text-black border border-transparent"
+                  ? "bg-gold text-black font-semibold"
+                  : "text-muted hover:text-primary border border-transparent"
               }`}
               title="Admin Portal"
             >
-              <Sparkles size={9} style={{ color: (isAdminMode || isAdminAuthenticated) ? (isDark ? "#000" : "#fff") : (isDark ? "#fff" : "#000") }} />
+              <Sparkles size={9} style={{ color: (isAdminMode || isAdminAuthenticated) ? "var(--text-main)" : "#F5F5F5" }} />
             </button>
 
             {/* Dark & Light Theme Options inside Nav bar */}
@@ -345,12 +344,53 @@ export default function App() {
                 theme={theme}
               />
 
+              {/* 2 ─ ABOUT SECTION */}
+              <section className="section-surface py-24 md:py-32 border-b border-white/8">
+                <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+                  <div className="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] items-start">
+                    <motion.div
+                      initial={{ opacity: 0, y: 16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <p className="text-xs uppercase tracking-[0.35em] text-[#B8B8B8] mb-6">About The Studio</p>
+                      <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-[#F5F2EC] mb-6 leading-tight">
+                        A private atelier for refined skin art.
+                      </h2>
+                      <p className="text-base leading-relaxed text-[#B8B8B8] max-w-xl">
+                        Dagi Tattoo is a high-end skin art studio in Addis Ababa that blends quiet luxury with exacting craft. Every appointment is curated, every design is fully bespoke, and every session is treated like a gallery-level composition.
+                      </p>
+                    </motion.div>
+
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {[
+                        { label: "Experience", text: "An intimate studio environment, meticulous hygiene standards, and a slow, considered approach to each tattoo." },
+                        { label: "Philosophy", text: "We design tattoos that feel like a second skin, honoring your story with refined contrast, elegant composition, and premium execution." }
+                      ].map((item, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, y: 16 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: idx * 0.1 }}
+                          className="card-panel p-8 card-hover-bronze"
+                        >
+                          <div className="text-xs uppercase tracking-[0.3em] text-[#C79A5D] mb-4 font-semibold">{item.label}</div>
+                          <p className="text-[#B8B8B8] leading-relaxed text-sm">{item.text}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               {/* 2 ─ MARQUEE STRIP */}
               <div style={{ 
                 overflow: "hidden", 
-                borderTop: isDark ? "1px solid #222" : "1px solid #e5e5e5", 
-                borderBottom: isDark ? "1px solid #222" : "1px solid #e5e5e5", 
-                background: isDark ? "#090909" : "#f7f3ef", 
+                borderTop: "1px solid rgba(248,250,252,0.08)", 
+                borderBottom: "1px solid rgba(248,250,252,0.08)", 
+                background: "var(--color-bg)", 
                 padding: "12px 0",
                 transition: "background 0.3s, border 0.3s"
               }}>
@@ -363,8 +403,8 @@ export default function App() {
                     <span key={ri} style={{ display: "inline-flex", alignItems: "center" }}>
                       {["Fine Line", "Blackwork", "Illustrative", "Dotwork", "Custom Only", "Addis Ababa", "Est. 2018", "By Appointment"].map((item, i) => (
                         <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 24, padding: "0 28px" }}>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)" }}>✦</span>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)" }}>{item}</span>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(245,245,245,0.2)" }}>✦</span>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(245,245,245,0.7)" }}>{item}</span>
                         </span>
                       ))}
                     </span>
@@ -372,41 +412,25 @@ export default function App() {
                 </motion.div>
               </div>
 
-              {/* 3 ─ GALLARY LOOKBOOK (Replaces Specialization style list) */}
-              <section style={{ 
-                padding: "56px 24px", 
-                background: isDark ? "#000000" : "#f7f3ef",
-                transition: "background 0.3s"
-              }}>
-                <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+              {/* 3 - GALLERY LOOKBOOK */}
+              <section className="py-16 sm:py-20 lg:py-24 px-5 sm:px-8 lg:px-12 bg-[var(--color-bg)]">
+                <div className="max-w-6xl mx-auto">
 
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 48, flexWrap: "wrap", gap: 16 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                      <div style={{ width: 36, height: 1, background: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)" }} />
-                      <span style={{ 
-                        fontFamily: "'DM Mono', monospace", 
-                        fontSize: 10, 
-                        letterSpacing: "0.35em", 
-                        textTransform: "uppercase", 
-                        color: isDark ? "#ffffff" : "#000000",
-                        fontWeight: "bold"
-                      }}>
+                  <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 mb-8 sm:mb-12">
+                    <div>
+                      <p className="text-[10px] font-mono tracking-[0.32em] uppercase text-[#C79A5D] font-semibold mb-3">
                         Master Ink Gallery
-                      </span>
+                      </p>
+                      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[var(--text-main)] leading-tight">
+                        Recent custom pieces
+                      </h2>
                     </div>
-                    <button onClick={() => goTo("gallery")} style={{
-                      background: "none", border: "none", cursor: "pointer", 
-                      color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)",
-                      fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em",
-                      textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6,
-                      transition: "color 0.2s"
-                    }}>
-                      Open live catalog <ArrowRight size={12} />
+                    <button onClick={() => goTo("gallery")} className="inline-flex items-center gap-2 self-start sm:self-auto text-[10px] font-mono tracking-[0.18em] uppercase text-[var(--text-muted)] hover:text-[#C79A5D] transition-colors">
+                      Open full catalog <ArrowRight size={13} />
                     </button>
                   </div>
 
-                  {/* 2 rows and 3 columns grid arrangement (more compact image size, 2 columns on mobile) */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-6 max-w-[840px] mx-auto">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 lg:gap-6">
                     {homeGalleryItems.map((item, i) => (
                       <motion.div
                         key={item.id}
@@ -416,30 +440,24 @@ export default function App() {
                         transition={{ delay: i * 0.08, duration: 0.5 }}
                         whileHover={{ scale: 1.012 }}
                         onClick={() => handleSelectStyle(item.styleName, item.id)}
-                        className={`group relative overflow-hidden aspect-[3/4] cursor-pointer rounded border transition-colors duration-300 ${
-                          isDark ? "border-neutral-800 bg-neutral-950" : "border-neutral-200 bg-white"
-                        }`}
+                        className="gallery-preview-card group"
                       >
-                        {/* Custom ink tattoo image with required attributes */}
                         <img
                           src={item.src}
                           alt={item.title}
-                          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                          className="gallery-preview-image"
                           referrerPolicy="no-referrer"
                         />
-                        {/* Shimmer gradient layout overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 md:p-6" />
-                        
-                        {/* Info tags available on hover */}
-                        <div className="absolute inset-x-0 bottom-0 p-3 md:p-6 transform translate-y-3 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
-                          <span className="inline-block px-1.5 py-0.5 rounded bg-white text-black text-[7px] md:text-[8px] font-bold uppercase tracking-wider font-mono mb-1 md:mb-1.5">
+                        <div className="gallery-preview-shade" />
+                        <div className="gallery-preview-content">
+                          <span className="gallery-preview-tag">
                             {item.category}
                           </span>
-                          <h3 className="font-serif text-xs md:text-base text-white tracking-wide font-bold leading-tight">
+                          <h3 className="gallery-preview-title">
                             {item.title}
                           </h3>
-                          <span className="text-[7px] md:text-[9px] font-mono text-neutral-300 uppercase block mt-1 md:mt-1.5">
-                            Select & Book This Style
+                          <span className="gallery-preview-action">
+                            Select and book this style
                           </span>
                         </div>
                       </motion.div>
@@ -448,47 +466,53 @@ export default function App() {
                 </div>
               </section>
 
-              {/* 4 ─ STATEMENT QUOTE */}
-              <section style={{ 
-                padding: "88px 24px", 
-                background: isDark ? "#050505" : "#fcfcfc", 
-                borderTop: isDark ? "1px solid #1a1a1a" : "1px solid #e5e5e5", 
-                borderBottom: isDark ? "1px solid #1a1a1a" : "1px solid #e5e5e5",
-                transition: "background 0.3s, border 0.3s"
-              }}>
-                <div style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-                  <div style={{ width: 1, height: 40, background: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)", margin: "0 auto 40px" }} />
-                  <p style={{
-                    fontFamily: "Georgia, serif", fontStyle: "italic",
-                    fontSize: "clamp(17px, 2.5vw, 22px)",
-                    color: isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)", lineHeight: 1.8, letterSpacing: "0.01em"
-                  }}>
-                    "Every tattoo exists as a permanent sculpture woven with the skin. The obligation is to ensure it conforms gracefully to your natural anatomy — executed with extreme surgical precision."
-                  </p>
-                  <div style={{ width: 1, height: 40, background: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)", margin: "40px auto 0" }} />
-                  <p style={{ 
-                    fontFamily: "'DM Mono', monospace", 
-                    fontSize: 9, 
-                    letterSpacing: "0.3em", 
-                    color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.5)", 
-                    textTransform: "uppercase", 
-                    marginTop: 28 
-                  }}>
-                    — Dagi, Lead Needle Artisan
-                  </p>
+              <section className="section-surface py-24 md:py-32 border-t border-white/8">
+                <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="text-center mb-16"
+                  >
+                    <p className="text-xs uppercase tracking-[0.35em] text-[#C79A5D] mb-6 font-semibold">Contact</p>
+                    <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-[#F5F2EC]">
+                      Get in touch.
+                    </h2>
+                  </motion.div>
+
+                  <div className="grid gap-6 md:grid-cols-3">
+                    {[
+                      { title: "Location", body: "Bole Medhanialem Road, Addis Ababa" },
+                      { title: "Bookings", body: "+251 911 234567" },
+                      { title: "Email", body: "bookings@dagitattoo.com" }
+                    ].map((item, idx) => (
+                      <motion.div
+                        key={item.title}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: idx * 0.1 }}
+                        className="card-panel p-8 card-hover-bronze text-center"
+                      >
+                        <h3 className="text-xs uppercase tracking-[0.3em] text-[#C79A5D] mb-4 font-semibold">{item.title}</h3>
+                        <p className="text-[#B8B8B8] leading-relaxed text-sm">{item.body}</p>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
               </section>
 
               {/* 5 ─ THREE PILLARS */}
-              <section style={{ 
-                padding: "88px 24px", 
-                background: isDark ? "#000000" : "#f7f3ef",
+              <section style={{
+                padding: "88px 24px",
+                background: "var(--color-bg)",
                 transition: "background 0.3s"
               }}>
                 <div style={{ maxWidth: 1080, margin: "0 auto" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48 }}>
                     <div style={{ width: 36, height: 1, background: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)" }} />
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: isDark ? "white" : "black" }}>The Standard</span>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "var(--text-main)" }}>The Standard</span>
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 1, background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)", borderRadius: 2, overflow: "hidden" }}>
@@ -500,13 +524,13 @@ export default function App() {
                         transition={{ delay: 0.1 + i * 0.1 }}
                         style={{ 
                           padding: "40px 36px", 
-                          background: isDark ? "#0a0a0a" : "#f7f3ef",
+                          background: isDark ? "#061739" : "#f7f3ef",
                           transition: "background 0.3s"
                         }}
                       >
                         <div style={{ marginBottom: 20 }}>{p.icon}</div>
                         <div style={{ fontFamily: "Georgia, serif", fontSize: 17, color: isDark ? "#ffffff" : "#000000", marginBottom: 14, letterSpacing: "0.01em" }}>{p.title}</div>
-                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: isDark ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.65)", lineHeight: 1.75 }}>{p.body}</div>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(245,245,245,0.65)", lineHeight: 1.75 }}>{p.body}</div>
                       </motion.div>
                     ))}
                   </div>
@@ -516,9 +540,9 @@ export default function App() {
               {/* 6 ─ CTA BAND */}
               <section style={{
                 padding: "80px 24px",
-                background: isDark ? "#050505" : "#f5f1ec",
-                borderTop: isDark ? "1px solid #1a1a1a" : "1px solid #e5e5e5",
-                borderBottom: isDark ? "1px solid #1a1a1a" : "1px solid #e5e5e5",
+                background: "var(--color-bg)",
+                borderTop: "1px solid rgba(248,250,252,0.08)",
+                borderBottom: "1px solid rgba(248,250,252,0.08)",
                 textAlign: "center",
                 transition: "background 0.3s, border 0.3s"
               }}>
@@ -534,8 +558,8 @@ export default function App() {
                       onClick={() => goTo("booking")}
                       style={{
                         padding: "13px 36px",
-                        background: isDark ? "#ffffff" : "#000000", border: "none",
-                        color: isDark ? "#000000" : "#ffffff", fontFamily: "'DM Mono', monospace",
+                        background: "var(--color-gold)", border: "none",
+                        color: "var(--text-main)", fontFamily: "'DM Mono', monospace",
                         fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase",
                         cursor: "pointer", borderRadius: 2, fontWeight: 600,
                         display: "flex", alignItems: "center", gap: 8, transition: "opacity 0.2s"
@@ -577,7 +601,13 @@ export default function App() {
           {activeTab === "booking" && (
             <motion.div key="booking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} style={{ paddingTop: 24 }}>
               <BookingForm
-                onSuccess={() => setRefreshTrigger(p => p + 1)}
+                onSuccess={() => {
+                  setRefreshTrigger(p => p + 1);
+                  if (typeof window !== "undefined") {
+                    window.history.replaceState(null, "", "#booking");
+                  }
+                  goTo("booking");
+                }}
                 initialGallerySelection={initialGallerySelection}
                 onClearGallerySelection={() => setInitialGallerySelection(null)}
                 onBrowseGallery={() => goTo("gallery")}
@@ -587,7 +617,7 @@ export default function App() {
               {/* FAQ Section at bottom of Booking view */}
               <section style={{ 
                 padding: "48px 24px 88px", 
-                background: isDark ? "#000000" : "#f7f3ef",
+                background: "var(--color-bg)",
                 transition: "background 0.3s"
               }}>
                 <div style={{ maxWidth: 700, margin: "0 auto" }}>
@@ -643,16 +673,16 @@ export default function App() {
                   alignItems: "center",
                   justifyContent: "center",
                   padding: "40px 24px",
-                  background: isDark ? "#000000" : "#f7f3ef",
+                  background: "var(--color-bg)",
                   transition: "background 0.3s"
                 }}>
                   <div style={{
                     width: "100%",
                     maxWidth: 400,
                     padding: "48px 32px",
-                    border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
+                    border: "1px solid rgba(248,250,252,0.12)",
                     borderRadius: 8,
-                    background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+                    background: "rgba(248,250,252,0.04)",
                     backdropFilter: "blur(10px)",
                     transition: "background 0.3s, border 0.3s"
                   }}>
@@ -673,7 +703,7 @@ export default function App() {
                       fontFamily: "'DM Sans', sans-serif",
                       fontSize: 13,
                       textAlign: "center",
-                      color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+                      color: "rgba(245,245,245,0.65)",
                       marginBottom: 32,
                       letterSpacing: "0.5px"
                     }}>
@@ -741,8 +771,8 @@ export default function App() {
                         disabled={authLoading}
                         style={{
                           padding: "12px 16px",
-                          background: isDark ? "#ffffff" : "#000000",
-                          color: isDark ? "#000000" : "#ffffff",
+                          background: "var(--color-gold)",
+                          color: "var(--text-main)",
                           border: "none",
                           borderRadius: 4,
                           fontFamily: "'DM Mono', monospace",
@@ -767,8 +797,8 @@ export default function App() {
                         marginTop: 12,
                         padding: "12px 16px",
                         background: "transparent",
-                        color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
-                        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
+                        color: "rgba(248,250,252,0.65)",
+                        border: "1px solid rgba(248,250,252,0.12)",
                         borderRadius: 4,
                         fontFamily: "'DM Mono', monospace",
                         fontSize: 11,
@@ -810,78 +840,71 @@ export default function App() {
       </main>
 
       {/* ─── FOOTER ─── */}
-      <footer style={{ 
-        background: isDark ? "#050505" : "#f6f2ed", 
-        borderTop: isDark ? "1px solid #1a1a1a" : "1px solid #e5e5e5", 
-        padding: "56px 24px 36px", 
-        position: "relative", 
-        zIndex: 1,
-        transition: "background 0.3s, border-top 0.3s"
-      }}>
-        <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+      <footer className="bg-black/80 border-t border-white/8 py-16 md:py-24 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
 
-          {/* Contact row */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 40 }}>
-            {[
-              { icon: <MapPin size={13} style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)" }} />, text: "Bole Medhanialem Road, Addis Ababa" },
-              { icon: <Phone size={13} style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)" }} />, text: "+251 911 234567" },
-              { icon: <Mail size={13} style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)" }} />, text: "bookings@dagitattoo.com" },
-            ].map((item, i) => (
-              <div key={i} style={{
-                padding: "20px 24px", 
-                border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)", 
-                borderRadius: 2,
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 9, textAlign: "center",
-                background: isDark ? "transparent" : "#ffffff",
-                transition: "background 0.3s, border 0.3s"
-              }}>
-                {item.icon}
-                <span style={{ 
-                  fontFamily: "'DM Mono', monospace", 
-                  fontSize: 10, 
-                  color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.6)", 
-                  letterSpacing: "0.07em" 
-                }}>
-                  {item.text}
-                </span>
+          {/* Main content */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            {/* Brand section */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="md:col-span-1"
+            >
+              <div className="w-12 h-12 rounded-full overflow-hidden border border-white/20 mb-6">
+                <img 
+                  src="/src/assets/images/RabOM.jpg" 
+                  alt="Dagi Tattoo"
+                  className="w-full h-full object-cover"
+                />
               </div>
+              <p className="text-[#B8B8B8] text-sm leading-relaxed">
+                Premium custom tattoo atelier in Addis Ababa. Every piece is a bespoke masterpiece.
+              </p>
+            </motion.div>
+
+            {/* Contact links */}
+            {[
+              { icon: <MapPin size={16} />, text: "Bole Medhanialem Road, Addis Ababa" },
+              { icon: <Phone size={16} />, text: "+251 911 234567" },
+              { icon: <Mail size={16} />, text: "bookings@dagitattoo.com" },
+            ].map((item, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: (idx + 1) * 0.1 }}
+                className="flex items-start gap-4"
+              >
+                <div className="text-[#C79A5D] flex-shrink-0 mt-1">
+                  {item.icon}
+                </div>
+                <div>
+                  <p className="text-[#B8B8B8] text-sm">{item.text}</p>
+                </div>
+              </motion.div>
             ))}
           </div>
 
-          {/* Bottom */}
-          <div style={{ 
-            display: "flex", 
-            flexWrap: "wrap", 
-            alignItems: "center", 
-            justifyContent: "space-between", 
-            gap: 12, 
-            paddingTop: 24, 
-            borderTop: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
-            transition: "border-top 0.3s"
-          }}>
-            <a href="https://instagram.com/dagitattoo" target="_blank" rel="noopener noreferrer"
-              style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                gap: 7, 
-                color: isDark ? "#ffffff" : "#000000", 
-                textDecoration: "none", 
-                fontFamily: "'DM Mono', monospace", 
-                fontSize: 10, 
-                letterSpacing: "0.12em" 
-              }}
+          {/* Divider */}
+          <div className="h-px bg-white/8 my-8" />
+
+          {/* Bottom bar */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+            <a 
+              href="https://instagram.com/dagitattoo" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-[#F5F2EC] hover:text-[#C79A5D] transition-colors text-sm font-medium"
             >
-              <Instagram size={13} style={{ color: isDark ? "#ffffff" : "#000000" }} /> @dagitattoo
+              <Instagram size={16} /> @dagitattoo
             </a>
-            <span style={{ 
-              fontFamily: "'DM Mono', monospace", 
-              fontSize: 9, 
-              color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)", 
-              letterSpacing: "0.12em", 
-              textTransform: "uppercase" 
-            }}>
+            <p className="text-[#B8B8B8] text-xs tracking-wider uppercase">
               © 2026 Dagi Tattoo · Addis Ababa · All rights reserved
-            </span>
+            </p>
           </div>
         </div>
       </footer>

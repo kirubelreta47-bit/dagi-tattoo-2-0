@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Calendar, Phone, Mail, User, Ruler, CircleHelp, CheckCircle, Upload, Palette, Check, Sparkles, Image as ImageIcon } from "lucide-react";
 
 interface BookingFormProps {
-  onSuccess: () => void;
+  onSuccess?: () => void;
   initialGallerySelection?: { styleName: string; itemId: string } | null;
   onClearGallerySelection?: () => void;
   onBrowseGallery?: () => void;
@@ -127,6 +127,7 @@ export default function BookingForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setLoading(true);
     setErrorMsg("");
 
@@ -155,8 +156,8 @@ export default function BookingForm({
       }
 
       const data = await response.json();
-      setSuccessData(data);
-      onSuccess(); // Trigger parent sync
+      setSuccessData({ ...submissionBody, ...data });
+      onSuccess?.(); // Trigger parent sync if provided
     } catch (err: any) {
       setErrorMsg(err.message || "An unexpected error occurred. Please try again.");
     } finally {
@@ -166,7 +167,7 @@ export default function BookingForm({
 
   return (
     <section id="booking-section" className={`py-16 md:py-24 border-b px-4 relative transition-colors duration-300 ${
-      isDark ? "bg-black text-white border-neutral-800" : "bg-white text-black border-neutral-100"
+      isDark ? "section-surface text-primary border-[rgba(245,242,236,0.12)]" : "bg-white text-black border-neutral-100"
     }`}>
       
       <div className="max-w-3xl mx-auto">
@@ -199,9 +200,7 @@ export default function BookingForm({
               </div>
 
               {/* Booking Container */}
-              <form onSubmit={handleSubmit} className={`border shadow-sm p-6 md:p-10 rounded space-y-8 relative z-10 transition-colors duration-300 ${
-                isDark ? "bg-neutral-950 border-neutral-800 text-white" : "bg-white border-neutral-200 text-black"
-              }`}>
+              <form onSubmit={handleSubmit} className="card-panel p-6 md:p-10 rounded-[2rem] space-y-8 relative z-10">
                 
                 {/* Personal Information Group */}
                 <div className="space-y-4">
@@ -222,7 +221,7 @@ export default function BookingForm({
                         value={formData.clientName}
                         onChange={handleInputChange}
                         placeholder="e.g. Hermela Tesfaye"
-                        className="w-full bg-neutral-50 border border-neutral-200 hover:border-neutral-400 focus:border-black py-2.5 px-3 text-sm text-black rounded outline-none transition-all duration-300"
+                        className="form-input"
                       />
                     </div>
 
@@ -237,7 +236,7 @@ export default function BookingForm({
                         value={formData.clientEmail}
                         onChange={handleInputChange}
                         placeholder="hermela@gmail.com"
-                        className="w-full bg-neutral-50 border border-neutral-200 hover:border-neutral-400 focus:border-black py-2.5 px-3 text-sm text-black rounded outline-none transition-all duration-300"
+                        className="form-input"
                       />
                     </div>
 
@@ -253,7 +252,7 @@ export default function BookingForm({
                         value={formData.clientPhone}
                         onChange={handleInputChange}
                         placeholder="+251 9--"
-                        className="w-full bg-neutral-50 border border-neutral-200 hover:border-neutral-400 focus:border-black py-2.5 px-3 text-sm text-black rounded outline-none transition-all duration-300"
+                        className="form-input"
                       />
                     </div>
                   </div>
@@ -274,9 +273,9 @@ export default function BookingForm({
                       <button
                         type="button"
                         onClick={() => selectStyleType("gallery")}
-                        className={`p-4 rounded border text-left transition-all duration-300 cursor-pointer ${
+                        className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer shadow-sm hover:-translate-y-0.5 ${
                           formData.styleSelectionType === "gallery"
-                            ? "bg-black border-black text-white"
+                            ? "bg-gold border-gold text-white"
                             : "bg-white border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
                         }`}
                       >
@@ -292,9 +291,9 @@ export default function BookingForm({
                       <button
                         type="button"
                         onClick={() => selectStyleType("own_art")}
-                        className={`p-4 rounded border text-left transition-all duration-300 cursor-pointer ${
+                        className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer shadow-sm hover:-translate-y-0.5 ${
                           formData.styleSelectionType === "own_art"
-                            ? "bg-black border-black text-white"
+                            ? "bg-gold border-gold text-white"
                             : "bg-white border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
                         }`}
                       >
@@ -310,9 +309,9 @@ export default function BookingForm({
                       <button
                         type="button"
                         onClick={() => selectStyleType("own_art_opinion")}
-                        className={`p-4 rounded border text-left transition-all duration-300 cursor-pointer ${
+                        className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer shadow-sm hover:-translate-y-0.5 ${
                           formData.styleSelectionType === "own_art_opinion"
-                            ? "bg-black border-black text-white"
+                            ? "bg-gold border-gold text-white"
                             : "bg-white border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
                         }`}
                       >
@@ -328,7 +327,7 @@ export default function BookingForm({
                   </div>
 
                   {/* Contextual UI depending on choice */}
-                  <div className="bg-neutral-50 border border-neutral-200 p-5 rounded space-y-4">
+                  <div className="bg-neutral-50 border border-neutral-200 p-5 rounded-[1.75rem] shadow-sm space-y-4">
                     
                     {formData.styleSelectionType === "gallery" ? (
                       <div className="space-y-3">
@@ -383,7 +382,7 @@ export default function BookingForm({
                             name="tatStyle"
                             value={formData.tatStyle}
                             onChange={handleInputChange}
-                            className="w-full bg-white border border-neutral-200 text-black focus:border-black py-2.5 px-3 text-sm rounded outline-none"
+                            className="w-full bg-white border border-neutral-200 focus:border-black focus:ring-2 focus:ring-black/10 text-black py-3 px-4 text-sm rounded-2xl outline-none shadow-sm"
                           >
                             {styles.map((style, i) => (
                               <option key={i} value={style} className="bg-white text-black">
@@ -407,12 +406,12 @@ export default function BookingForm({
                             value={formData.tatStyle}
                             onChange={handleInputChange}
                             placeholder="e.g. Custom Gothic Script & Rose"
-                            className="w-full bg-white border border-neutral-200 text-black focus:border-black py-2.5 px-3 text-sm rounded outline-none"
+                            className="w-full bg-white border border-neutral-200 focus:border-black focus:ring-2 focus:ring-black/10 text-black py-3 px-4 text-sm rounded-2xl outline-none shadow-sm"
                           />
                         </div>
 
                         {/* Programmatic image attachment section */}
-                        <div className="p-5 bg-white border border-dashed border-neutral-200 rounded space-y-3 text-black">
+                        <div className="p-5 bg-white border border-dashed border-neutral-200 rounded-[1.5rem] shadow-sm space-y-3 text-black">
                           <div className="flex items-center justify-between">
                             <label className="text-[10px] text-neutral-700 uppercase font-mono tracking-wider flex items-center gap-1.5">
                               <Upload className="w-3.5 h-3.5 text-black" /> Upload Custom Design File
@@ -442,7 +441,7 @@ export default function BookingForm({
                               <button 
                                 type="button" 
                                 onClick={triggerFileSelect}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white text-[10px] font-bold uppercase tracking-wider rounded-sm cursor-pointer transition-all"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold text-white text-[10px] font-bold uppercase tracking-wider rounded-full cursor-pointer transition-all shadow-sm"
                               >
                                 Select Design Image
                               </button>
@@ -450,12 +449,12 @@ export default function BookingForm({
                             </div>
                             
                             {formData.uploadedImage ? (
-                              <div className="relative w-14 h-14 rounded border border-neutral-200 overflow-hidden bg-black flex-shrink-0 flex items-center justify-center">
+                              <div className="relative w-14 h-14 rounded border border-neutral-200 overflow-hidden bg-dark flex-shrink-0 flex items-center justify-center">
                                 <img src={formData.uploadedImage} className="w-full h-full object-cover" />
                                 <button 
                                   type="button" 
                                   onClick={() => setFormData(p => ({ ...p, uploadedImage: "" }))}
-                                  className="absolute top-0 right-0 bg-black/90 text-white hover:text-red-400 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-mono border border-neutral-800"
+                                  className="absolute top-0 right-0 bg-dark/90 text-white hover:text-red-400 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-mono border border-neutral-800"
                                 >
                                   ✕
                                 </button>
@@ -477,16 +476,16 @@ export default function BookingForm({
                         <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider flex items-center gap-1.5">
                           <Ruler className="w-3.5 h-3.5 text-black" /> Desired Size Scale
                         </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           {sizes.map((s) => (
                             <button
                               key={s.value}
                               type="button"
                               onClick={() => selectSize(s.value)}
-                              className={`py-2 px-1 text-[10px] uppercase font-mono tracking-wider border rounded transition-all duration-300 cursor-pointer ${
+                              className={`py-3 px-3 text-[10px] uppercase font-mono tracking-wider border rounded-2xl transition-all duration-300 cursor-pointer ${
                                 formData.size === s.value
-                                  ? "bg-black border-black text-white font-semibold"
-                                  : "bg-white border-neutral-200 hover:border-black text-neutral-600"
+                                  ? "bg-gold border-gold text-white font-semibold shadow-lg"
+                                  : "bg-white border-neutral-200 hover:border-black text-neutral-600 shadow-sm"
                               }`}
                             >
                               {s.label}
@@ -504,7 +503,7 @@ export default function BookingForm({
                           name="placement"
                           value={formData.placement}
                           onChange={handleInputChange}
-                          className="w-full bg-white border border-neutral-200 text-black focus:border-black py-2.5 px-3 text-xs rounded outline-none"
+                          className="w-full bg-white border border-neutral-200 focus:border-black focus:ring-2 focus:ring-black/10 text-black py-3 px-4 text-xs rounded-2xl outline-none shadow-sm"
                         >
                           {placements.map((p, i) => (
                             <option key={i} value={p} className="bg-white text-black">
@@ -524,14 +523,14 @@ export default function BookingForm({
                       <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider block">
                         Have you had a tattoo before?
                       </label>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 gap-3">
                         <button
                           type="button"
                           onClick={() => selectPriorTattoo(true)}
-                          className={`py-2 px-1 text-[10px] uppercase font-mono tracking-wider border rounded transition-all duration-300 cursor-pointer ${
+                          className={`py-3 px-3 text-[10px] uppercase font-mono tracking-wider border rounded-2xl transition-all duration-300 cursor-pointer ${
                             formData.hasPriorTattoo
-                              ? "bg-black border-black text-white font-semibold"
-                              : "bg-white border-neutral-200 hover:border-black text-neutral-600"
+                              ? "bg-gold border-gold text-white font-semibold shadow-lg"
+                              : "bg-white border-neutral-200 hover:border-black text-neutral-600 shadow-sm"
                           }`}
                         >
                           Yes, experienced
@@ -539,10 +538,10 @@ export default function BookingForm({
                         <button
                           type="button"
                           onClick={() => selectPriorTattoo(false)}
-                          className={`py-2 px-1 text-[10px] uppercase font-mono tracking-wider border rounded transition-all duration-300 cursor-pointer ${
+                          className={`py-3 px-3 text-[10px] uppercase font-mono tracking-wider border rounded-2xl transition-all duration-300 cursor-pointer ${
                             !formData.hasPriorTattoo
-                              ? "bg-black border-black text-white font-semibold"
-                              : "bg-white border-neutral-200 hover:border-black text-neutral-600"
+                              ? "bg-gold border-gold text-white font-semibold shadow-lg"
+                              : "bg-white border-neutral-200 hover:border-black text-neutral-600 shadow-sm"
                           }`}
                         >
                           No, first time
@@ -596,7 +595,7 @@ export default function BookingForm({
                       onChange={handleInputChange}
                       rows={4}
                       placeholder="Share elements you want included, meaningful references, or links to references..."
-                      className="w-full bg-white border border-neutral-200 hover:border-neutral-400 focus:border-black py-2.5 px-3 text-sm text-black rounded outline-none resize-none transition-colors duration-300"
+                      className="w-full bg-white border border-neutral-200 focus:border-black focus:ring-2 focus:ring-black/10 py-3 px-4 text-sm text-black rounded-2xl outline-none resize-none transition-all duration-300 shadow-sm"
                     />
                   </div>
                 </div>
@@ -619,7 +618,7 @@ export default function BookingForm({
                         required
                         value={formData.date}
                         onChange={handleInputChange}
-                        className="w-full bg-white border border-neutral-200 focus:border-black py-2.5 px-3 text-sm text-black rounded outline-none cursor-pointer"
+                        className="w-full bg-white border border-neutral-200 focus:border-black focus:ring-2 focus:ring-black/10 py-3 px-4 text-sm text-black rounded-2xl outline-none cursor-pointer shadow-sm"
                       />
                     </div>
 
@@ -628,16 +627,16 @@ export default function BookingForm({
                       <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider">
                         Available Consultation Hour
                       </label>
-                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                         {timeSlots.map((ts) => (
                           <button
                             key={ts}
                             type="button"
                             onClick={() => selectTime(ts)}
-                            className={`py-2 text-[9px] font-mono border rounded transition-all duration-300 cursor-pointer ${
+                            className={`py-3 text-[9px] font-mono border rounded-2xl transition-all duration-300 cursor-pointer ${
                               formData.timeSlot === ts
-                                ? "bg-black text-white font-extrabold border-black"
-                                : "bg-white border-neutral-200 hover:border-black text-neutral-600"
+                                ? "bg-gold text-white font-extrabold border-gold shadow-lg"
+                                : "bg-white border-neutral-200 hover:border-black text-neutral-600 shadow-sm"
                             }`}
                           >
                             {ts}
@@ -661,7 +660,7 @@ export default function BookingForm({
                     type="submit"
                     disabled={loading}
                     id="submit-booking-btn"
-                    className="w-full py-4 bg-black hover:bg-neutral-800 text-white font-extrabold text-xs tracking-[0.2em] uppercase rounded-sm transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer transform active:scale-[0.98]"
+                    className="w-full py-4 bg-gold text-white font-extrabold text-xs tracking-[0.2em] uppercase rounded-sm transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer transform active:scale-[0.98]"
                   >
                     {loading ? (
                       <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -687,20 +686,72 @@ export default function BookingForm({
 
               <div className="mt-6 mb-10">
                 <div className="font-serif text-2xl text-black uppercase tracking-wide">
-                  Invitation Transmitted
+                  Booking Confirmed
                 </div>
                 <h3 className="text-neutral-500 font-mono text-xs uppercase tracking-widest mt-2">
-                  Session Code: {successData.id}
+                  Session Code: {successData.id || "N/A"}
                 </h3>
                 <div className="w-10 h-[1px] bg-neutral-200 mx-auto my-4" />
                 <p className="text-neutral-600 text-sm max-w-md mx-auto leading-relaxed">
                   Thank you, <span className="text-black font-semibold">{successData.clientName}</span>. Your tattoo request has been logged in
-                  Dagi's secure calendar pipeline. {successData.clientEmail ? (
-                    <span>An email briefing and call will reach you shortly at <span className="text-black font-semibold">{successData.clientEmail}</span>.</span>
-                  ) : (
-                    <span>A consultation call other briefing will reach you shortly at <span className="text-black font-semibold">{successData.clientPhone}</span>.</span>
-                  )}
+                  Dagi's secure calendar pipeline.
                 </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 mb-8">
+                <div className="bg-neutral-50 border border-neutral-200 p-5 rounded-[1.5rem] shadow-sm text-left space-y-3">
+                  <div className="text-[10px] uppercase tracking-widest font-semibold text-neutral-500">Booking Summary</div>
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Client</span>
+                    <span className="font-semibold text-black">{successData.clientName}</span>
+                  </div>
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Email</span>
+                    <span className="font-semibold text-black">{successData.clientEmail || "Not provided"}</span>
+                  </div>
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Phone</span>
+                    <span className="font-semibold text-black">{successData.clientPhone}</span>
+                  </div>
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Design source</span>
+                    <span className="font-semibold text-black">{successData.styleSelectionType === "gallery" ? "Dagi's Gallery" : successData.styleSelectionType === "own_art" ? "Own design" : "Curation support"}</span>
+                  </div>
+                  {successData.styleSelectionType === "gallery" && successData.selectedGalleryItemId && (
+                    <div className="flex justify-between text-neutral-600">
+                      <span>Gallery ref</span>
+                      <span className="font-semibold text-black">{successData.selectedGalleryItemId}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Style</span>
+                    <span className="font-semibold text-black">{successData.tatStyle}</span>
+                  </div>
+                </div>
+
+                <div className="bg-neutral-50 border border-neutral-200 p-5 rounded-[1.5rem] shadow-sm text-left space-y-3">
+                  <div className="text-[10px] uppercase tracking-widest font-semibold text-neutral-500">Session Details</div>
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Placement</span>
+                    <span className="font-semibold text-black">{successData.placement}</span>
+                  </div>
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Size</span>
+                    <span className="font-semibold text-black">{successData.size}</span>
+                  </div>
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Date</span>
+                    <span className="font-semibold text-black">{successData.date}</span>
+                  </div>
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Time</span>
+                    <span className="font-semibold text-black">{successData.timeSlot}</span>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest font-semibold text-neutral-500 mb-2">Project Notes</div>
+                    <p className="text-sm text-black leading-relaxed whitespace-pre-line">{successData.description || "No additional notes provided."}</p>
+                  </div>
+                </div>
               </div>
 
               {/* Receipt card summary details */}
@@ -755,7 +806,7 @@ export default function BookingForm({
                     setSuccessData(null);
                     if (onBrowseGallery) onBrowseGallery();
                   }}
-                  className="px-6 py-3 bg-black hover:bg-neutral-800 text-white font-bold text-xs tracking-widest uppercase rounded cursor-pointer transition-all duration-300"
+                  className="px-6 py-3 bg-gold text-white font-bold text-xs tracking-widest uppercase rounded cursor-pointer transition-all duration-300"
                 >
                   Return To Catalog
                 </button>
