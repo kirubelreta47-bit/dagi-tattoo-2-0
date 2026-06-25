@@ -1,23 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Calendar, Phone, Mail, User, Ruler, CircleHelp, CheckCircle, Upload, Palette, Check, Sparkles, Image as ImageIcon } from "lucide-react";
+import { Upload, Check, Sparkles, Image as ImageIcon } from "lucide-react";
 
 interface BookingFormProps {
   onSuccess?: () => void;
   initialGallerySelection?: { styleName: string; itemId: string } | null;
   onClearGallerySelection?: () => void;
   onBrowseGallery?: () => void;
-  theme?: "dark" | "light";
 }
 
 export default function BookingForm({ 
   onSuccess, 
   initialGallerySelection, 
   onClearGallerySelection,
-  onBrowseGallery,
-  theme = "dark"
+  onBrowseGallery
 }: BookingFormProps) {
-  const isDark = theme === "dark";
+  const isDark = true;
   const [formData, setFormData] = useState({
     clientName: "",
     clientEmail: "",
@@ -31,8 +29,8 @@ export default function BookingForm({
     date: "",
     timeSlot: "11:00 AM",
     hasPriorTattoo: true,
-    skinTone: "#e6c29b", // Warm Sandy
-    uploadedImage: "" // Base64 representation of uploaded image file
+    skinTone: "#e6c29b",
+    uploadedImage: "" 
   });
 
   const [loading, setLoading] = useState(false);
@@ -60,755 +58,459 @@ export default function BookingForm({
     "Custom Script & Tiny Typography"
   ];
 
-  const placements = ["Forearm", "Upper Arm / Sleeve", "Chest Panel", "Back Panel", "Thigh / Leg", "Rib Cage", "Custom"];
-  const sizes = [
-    { label: "Small (under 2\")", value: "Small" },
-    { label: "Medium (2\" – 5\")", value: "Medium" },
-    { label: "Large (5\" +)", value: "Large" }
-  ];
+  const placements = ["Forearm", "Upper Arm", "Chest", "Back", "Thigh", "Rib Cage", "Custom"];
+  const sizes = ["Small", "Medium", "Large"];
 
   const timeSlots = ["11:00 AM", "01:00 PM", "03:00 PM", "05:30 PM", "08:00 PM"];
 
   const skinTones = [
-    { name: "Porcelain Light", code: "#f9ebdf" },
-    { name: "Soft Almond", code: "#f3d1b7" },
-    { name: "Warm Amber", code: "#e6c29b" },
-    { name: "Golden Chestnut", code: "#cfa170" },
-    { name: "Deep Walnut", code: "#9f7344" },
-    { name: "Sable Espresso", code: "#5d3e21" }
+    { name: "Light", code: "#f9ebdf" },
+    { name: "Soft", code: "#f3d1b7" },
+    { name: "Medium", code: "#e6c29b" },
+    { name: "Tan", code: "#cfa170" },
+    { name: "Deep", code: "#9f7344" },
+    { name: "Dark", code: "#5d3e21" }
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const selectPlacement = (p: string) => {
-    setFormData({ ...formData, placement: p });
-  };
-
-  const selectSize = (s: string) => {
-    setFormData({ ...formData, size: s });
-  };
-
-  const selectTime = (t: string) => {
-    setFormData({ ...formData, timeSlot: t });
-  };
-
-  const selectStyleType = (type: "gallery" | "own_art" | "own_art_opinion") => {
-    setFormData(prev => ({ ...prev, styleSelectionType: type }));
-  };
-
-  const selectPriorTattoo = (hasPrior: boolean) => {
-    setFormData(prev => ({ ...prev, hasPriorTattoo: hasPrior }));
-  };
-
-  const selectSkinTone = (toneHex: string) => {
-    setFormData(prev => ({ ...prev, skinTone: toneHex }));
-  };
-
-  const triggerFileSelect = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrorMsg("Attachment image exceeds 5MB limit. Please provide a smaller image.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, uploadedImage: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     setLoading(true);
     setErrorMsg("");
 
-    // Minimal client-side validation
     if (!formData.clientName || !formData.clientPhone || !formData.date) {
-      setErrorMsg("Please complete all vital fields marked with golden identifiers.");
+      setErrorMsg("Required: Name, Phone, and Date.");
       setLoading(false);
       return;
     }
-
-    // Force style title if it is default empty
-    const submissionBody = {
-      ...formData,
-      tatStyle: formData.tatStyle || "Bespoke Custom Layout"
-    };
 
     try {
       const response = await fetch("/api/schedules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(submissionBody)
+        body: JSON.stringify(formData)
       });
 
-      if (!response.ok) {
-        throw new Error("Unable to transmit scheduling invitation.");
-      }
-
+      if (!response.ok) throw new Error("Could not send booking request.");
       const data = await response.json();
-      setSuccessData({ ...submissionBody, ...data });
-      onSuccess?.(); // Trigger parent sync if provided
+      setSuccessData({ ...formData, ...data });
+      onSuccess?.();
     } catch (err: any) {
-      setErrorMsg(err.message || "An unexpected error occurred. Please try again.");
+      setErrorMsg(err.message || "An error occurred.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <section id="booking-section" className={`py-16 md:py-24 border-b px-4 relative transition-colors duration-300 ${
-      isDark ? "section-surface text-primary border-[rgba(245,242,236,0.12)]" : "bg-white text-black border-neutral-100"
-    }`}>
+    <section id="booking-section" className="py-12 md:py-20 px-5 relative transition-colors duration-300 bg-[var(--color-bg)] text-[var(--text-main)]">
       
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <AnimatePresence mode="wait">
           {!successData ? (
             <motion.div
               key="booking-form"
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.5 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="grid lg:grid-cols-[1fr_400px] gap-12 lg:gap-16 items-start"
             >
-              {/* Header */}
-              <div className="text-center mb-12">
-                <div className={`inline-flex items-center gap-1.5 text-xs font-mono tracking-widest uppercase mb-3 font-bold ${
-                  isDark ? "text-neutral-305" : "text-black"
-                }`}>
-                  <Calendar className={`w-4 h-4 ${isDark ? "text-white" : "text-black"}`} /> Consultation Booking
+              {/* Left Column: Form Content */}
+              <div className="space-y-12">
+                <div>
+                  <h2 className="text-4xl sm:text-5xl font-bebas mb-4 tracking-wider uppercase">Secure Your Session</h2>
+                  <p className="text-[var(--text-muted)] max-w-lg leading-relaxed text-sm lg:text-base">
+                    Dagi's studio operates strictly by appointment. Share your vision below, and we will contact you to finalize the concept and pricing.
+                  </p>
                 </div>
-                <h2 className={`font-serif text-2xl md:text-3xl font-bold tracking-wide uppercase ${
-                  isDark ? "text-white" : "text-black"
-                }`}>
-                  Secure Your Session
-                </h2>
-                <p className={`text-xs font-mono max-w-sm mx-auto mt-2 tracking-wide uppercase ${
-                  isDark ? "text-neutral-400" : "text-neutral-500"
-                }`}>
-                  Fill in your custom details. Dagi will review your project concept personally.
-                </p>
-              </div>
 
-              {/* Booking Container */}
-              <form onSubmit={handleSubmit} className="card-panel p-6 md:p-10 rounded-[2rem] space-y-8 relative z-10">
-                
-                {/* Personal Information Group */}
-                <div className="space-y-4">
-                  <h3 className="font-serif text-sm text-neutral-900 tracking-widest uppercase pb-2 border-b border-neutral-200 font-semibold flex items-center gap-2">
-                    <span className="text-neutral-400">01.</span> Contact Details
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Name */}
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-black" /> Full Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="clientName"
-                        required
-                        value={formData.clientName}
-                        onChange={handleInputChange}
-                        placeholder="e.g. Hermela Tesfaye"
-                        className="form-input"
-                      />
+                <form onSubmit={handleSubmit} className="space-y-12">
+                  {/* Phase 1: Identity */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4 mb-2">
+                      <span className="w-8 h-[1px] bg-[var(--color-accent)] opacity-50" />
+                      <h3 className="text-xs uppercase font-mono tracking-[0.3em] text-[var(--color-accent)] font-semibold">01. Identity</h3>
                     </div>
-
-                    {/* Email */}
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold">Full Name *</label>
+                        <input
+                          type="text"
+                          name="clientName"
+                          required
+                          value={formData.clientName}
+                          onChange={handleInputChange}
+                          className="w-full bg-transparent border-b border-[var(--border-muted)] py-3 focus:border-[var(--color-accent)] outline-none transition-colors text-sm"
+                          placeholder="HERMELA TESFAYE"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold">Phone *</label>
+                        <input
+                          type="tel"
+                          name="clientPhone"
+                          required
+                          value={formData.clientPhone}
+                          onChange={handleInputChange}
+                          className="w-full bg-transparent border-b border-[var(--border-muted)] py-3 focus:border-[var(--color-accent)] outline-none transition-colors text-sm"
+                          placeholder="+251 9--"
+                        />
+                      </div>
+                    </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-neutral-550" /> Email <span className="text-neutral-450 font-normal lowercase">(Optional)</span>
-                      </label>
+                      <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold">Email Address (Optional)</label>
                       <input
                         type="email"
                         name="clientEmail"
                         value={formData.clientEmail}
                         onChange={handleInputChange}
-                        placeholder="hermela@gmail.com"
-                        className="form-input"
-                      />
-                    </div>
-
-                    {/* Phone */}
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-black" /> Phone Contact <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        name="clientPhone"
-                        required
-                        value={formData.clientPhone}
-                        onChange={handleInputChange}
-                        placeholder="+251 9--"
-                        className="form-input"
+                        className="w-full bg-transparent border-b border-[var(--border-muted)] py-3 focus:border-[var(--color-accent)] outline-none transition-colors text-sm"
+                        placeholder="HERMELA@EXAMPLE.COM"
                       />
                     </div>
                   </div>
-                </div>
 
-                {/* Tattoo Concept Specifications */}
-                <div className="space-y-6">
-                  <h3 className="font-serif text-sm text-neutral-900 tracking-widest uppercase pb-2 border-b border-neutral-200 font-semibold flex items-center gap-2">
-                    <span className="text-neutral-400">02.</span> Creative Concept
-                  </h3>
-
-                  {/* Style Preference choice selection buttons */}
-                  <div className="space-y-3">
-                    <label className="text-[10px] text-neutral-550 uppercase font-mono tracking-wider">
-                      Specify Design Originality & Style Source
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => selectStyleType("gallery")}
-                        className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer shadow-sm hover:-translate-y-0.5 ${
-                          formData.styleSelectionType === "gallery"
-                            ? "bg-gold border-gold text-white"
-                            : "bg-white border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
-                        }`}
-                      >
-                        <div className="font-serif text-xs font-bold uppercase tracking-wider flex items-center justify-between">
-                          <span>Dagi's Gallery</span>
-                          {formData.styleSelectionType === "gallery" && <div className="w-2 h-2 rounded-full bg-white" />}
-                        </div>
-                        <p className="text-[10px] mt-1.5 text-neutral-500 font-sans leading-relaxed">
-                          Choose or book directly from Dagi's masterpiece portfolio gallery.
-                        </p>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => selectStyleType("own_art")}
-                        className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer shadow-sm hover:-translate-y-0.5 ${
-                          formData.styleSelectionType === "own_art"
-                            ? "bg-gold border-gold text-white"
-                            : "bg-white border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
-                        }`}
-                      >
-                        <div className="font-serif text-xs font-bold uppercase tracking-wider flex items-center justify-between">
-                          <span>I Have My Own Art</span>
-                          {formData.styleSelectionType === "own_art" && <div className="w-2 h-2 rounded-full bg-white" />}
-                        </div>
-                        <p className="text-[10px] mt-1.5 text-neutral-500 font-sans leading-relaxed">
-                          You ready a pre-drawn custom design concept to be inked cleanly.
-                        </p>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => selectStyleType("own_art_opinion")}
-                        className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer shadow-sm hover:-translate-y-0.5 ${
-                          formData.styleSelectionType === "own_art_opinion"
-                            ? "bg-gold border-gold text-white"
-                            : "bg-white border-neutral-200 text-neutral-600 hover:border-black hover:text-black"
-                        }`}
-                      >
-                        <div className="font-serif text-xs font-bold uppercase tracking-wider flex items-center justify-between">
-                          <span>Curation Support</span>
-                          {formData.styleSelectionType === "own_art_opinion" && <div className="w-2 h-2 rounded-full bg-white" />}
-                        </div>
-                        <p className="text-[10px] mt-1.5 text-neutral-500 font-sans leading-relaxed">
-                          You have design but wish for Dagi's expert opinion on ink profiling.
-                        </p>
-                      </button>
+                  {/* Phase 2: Design Concept */}
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-4 mb-2">
+                      <span className="w-8 h-[1px] bg-[var(--color-accent)] opacity-50" />
+                      <h3 className="text-xs uppercase font-mono tracking-[0.3em] text-[var(--color-accent)] font-semibold">02. Design Concept</h3>
                     </div>
-                  </div>
 
-                  {/* Contextual UI depending on choice */}
-                  <div className="bg-neutral-50 border border-neutral-200 p-5 rounded-[1.75rem] shadow-sm space-y-4">
-                    
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
+                      {[ 
+                        { id: "gallery", label: "Gallery Style", sub: "Choose from portfolio" },
+                        { id: "own_art", label: "Custom Idea", sub: "Your own concept" },
+                        { id: "own_art_opinion", label: "Curation", sub: "Expert guidance" }
+                      ].map(option => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, styleSelectionType: option.id as any }))}
+                          className={`p-6 text-left border transition-all duration-300 ${
+                            formData.styleSelectionType === option.id 
+                              ? "bg-[var(--color-accent)] border-[var(--color-accent)] text-black" 
+                              : "border-[var(--border-muted)] hover:border-[var(--text-muted)]"
+                          }`}
+                        >
+                          <div className="font-bebas text-lg leading-tight uppercase tracking-wider">{option.label}</div>
+                          <div className={`text-[10px] mt-1 uppercase tracking-tight ${formData.styleSelectionType === option.id ? "text-black/70" : "text-[var(--text-muted)]"}`}>{option.sub}</div>
+                        </button>
+                      ))}
+                    </div>
+
                     {formData.styleSelectionType === "gallery" ? (
-                      <div className="space-y-3">
-                        <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider block">
-                          Selected Masterpiece Reference
-                        </label>
-                        {formData.selectedGalleryItemId ? (
-                          <div className="flex items-center justify-between bg-white border border-neutral-200 p-3.5 rounded text-black">
-                            <div>
-                              <div className="text-xs text-black font-serif font-bold uppercase tracking-wide">
-                                {formData.tatStyle}
-                              </div>
-                              <div className="text-[10px] text-neutral-550 font-mono uppercase mt-0.5">
-                                Gallery reference ID: {formData.selectedGalleryItemId}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (onClearGallerySelection) onClearGallerySelection();
-                                setFormData(prev => ({ 
-                                  ...prev, 
-                                  selectedGalleryItemId: "", 
-                                  tatStyle: "Celestial & Geometric" 
-                                }));
-                              }}
-                              className="text-[10px] font-mono uppercase tracking-wider text-neutral-800 hover:text-black hover:underline cursor-pointer"
-                            >
-                              Clear
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="p-4 bg-white border border-neutral-200 rounded text-center space-y-3">
-                            <p className="text-xs text-neutral-600 font-sans">
-                              Browse through Dagi's masterpiece collection to pick a design style!
-                            </p>
-                            <button
-                              type="button"
-                              onClick={onBrowseGallery}
-                              className="px-5 py-2 border border-neutral-300 hover:border-black hover:bg-neutral-50 text-black text-[10px] font-mono tracking-widest uppercase rounded transition-colors cursor-pointer bg-white"
-                            >
-                              Browse Master Gallery
-                            </button>
+                      <div className="space-y-4 p-6 bg-[var(--color-surface)] border border-[var(--border-muted)]">
+                        <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold block">Select Style Architecture</label>
+                        <select 
+                          name="tatStyle" 
+                          value={formData.tatStyle} 
+                          onChange={handleInputChange}
+                          className="w-full bg-transparent border-b border-[var(--border-muted)] py-2 focus:border-[var(--color-accent)] outline-none text-sm text-[var(--text-main)]"
+                        >
+                          {styles.map(s => <option key={s} value={s} className="bg-[var(--color-bg)]">{s}</option>)}
+                        </select>
+                        {formData.selectedGalleryItemId && (
+                          <div className="flex items-center justify-between pt-2">
+                             <span className="text-[10px] text-[var(--color-accent)] uppercase font-mono">Ref: {formData.selectedGalleryItemId}</span>
+                             <button type="button" onClick={onClearGallerySelection} className="text-[10px] uppercase underline opacity-60 hover:opacity-100">Remove</button>
                           </div>
                         )}
-                        
-                        <div className="space-y-2 pt-2">
-                          <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider">
-                            Preferred Style Architecture
-                          </label>
-                          <select
-                            name="tatStyle"
-                            value={formData.tatStyle}
-                            onChange={handleInputChange}
-                            className="w-full bg-white border border-neutral-200 focus:border-black focus:ring-2 focus:ring-black/10 text-black py-3 px-4 text-sm rounded-2xl outline-none shadow-sm"
-                          >
-                            {styles.map((style, i) => (
-                              <option key={i} value={style} className="bg-white text-black">
-                                {style}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                        {!formData.selectedGalleryItemId && (
+                          <button type="button" onClick={onBrowseGallery} className="text-[11px] uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--color-accent)] transition-colors flex items-center gap-2">
+                            <ImageIcon size={14} /> Open Master Portfolio
+                          </button>
+                        )}
                       </div>
                     ) : (
-                      /* Own Artwork / Curation upload interface - shown for both 'own_art' AND 'own_art_opinion' */
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <label className="text-[10px] text-neutral-650 uppercase font-mono tracking-wider block">
-                            Preferred Style Title or Category name
-                          </label>
+                      <div className="space-y-4 p-6 bg-[var(--color-surface)] border border-[var(--border-muted)]">
+                        <div className="space-y-4">
+                          <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold block">Your Style Concept</label>
                           <input
                             type="text"
                             name="tatStyle"
-                            required
                             value={formData.tatStyle}
                             onChange={handleInputChange}
-                            placeholder="e.g. Custom Gothic Script & Rose"
-                            className="w-full bg-white border border-neutral-200 focus:border-black focus:ring-2 focus:ring-black/10 text-black py-3 px-4 text-sm rounded-2xl outline-none shadow-sm"
+                            placeholder="WHAT IS YOUR STYLE CONCEPT?"
+                            className="w-full bg-transparent border-b border-[var(--border-muted)] py-3 focus:border-[var(--color-accent)] outline-none text-sm uppercase tracking-wide"
                           />
-                        </div>
-
-                        {/* Programmatic image attachment section */}
-                        <div className="p-5 bg-white border border-dashed border-neutral-200 rounded-[1.5rem] shadow-sm space-y-3 text-black">
-                          <div className="flex items-center justify-between">
-                            <label className="text-[10px] text-neutral-700 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                              <Upload className="w-3.5 h-3.5 text-black" /> Upload Custom Design File
-                            </label>
-                            
-                            {formData.uploadedImage ? (
-                              <span className="text-[9px] text-neutral-800 font-mono uppercase bg-neutral-105 px-2 py-0.5 rounded border border-neutral-200">
-                                Attached
-                              </span>
-                            ) : (
-                              <span className="text-[9px] text-neutral-500 font-mono uppercase bg-neutral-55 px-2 py-0.5 rounded border border-neutral-200">
-                                Optional
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-4">
-                            <div className="flex-1">
-                              {/* Dedicated file element input */}
-                              <input 
-                                type="file" 
-                                accept="image/*" 
-                                ref={fileInputRef}
-                                onChange={handleFileUpload}
-                                className="hidden" 
-                              />
-                              <button 
-                                type="button" 
-                                onClick={triggerFileSelect}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gold text-white text-[10px] font-bold uppercase tracking-wider rounded-full cursor-pointer transition-all shadow-sm"
-                              >
-                                Select Design Image
-                              </button>
-                              <p className="text-[9px] text-neutral-400 mt-1.5 font-mono">Accepts PNG, JPG, WebP (Max 5MB)</p>
-                            </div>
-                            
-                            {formData.uploadedImage ? (
-                              <div className="relative w-14 h-14 rounded border border-neutral-200 overflow-hidden bg-dark flex-shrink-0 flex items-center justify-center">
-                                <img src={formData.uploadedImage} className="w-full h-full object-cover" />
-                                <button 
-                                  type="button" 
-                                  onClick={() => setFormData(p => ({ ...p, uploadedImage: "" }))}
-                                  className="absolute top-0 right-0 bg-dark/90 text-white hover:text-red-400 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-mono border border-neutral-800"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="w-14 h-14 rounded border border-neutral-200 bg-neutral-100 flex items-center justify-center text-neutral-400 flex-shrink-0">
-                                <ImageIcon className="w-5 h-5 text-neutral-450" />
-                              </div>
-                            )}
-                          </div>
+                          <p className="text-[10px] text-[var(--text-muted)] opacity-70 uppercase tracking-wide">
+                            ✦ You can attach a reference image or sketch below in the <em>Logistics</em> section.
+                          </p>
                         </div>
                       </div>
                     )}
+                  </div>
 
-                    {/* Sizing scale and placing parameters within modular subgrid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-neutral-200">
-                      {/* Scale selection */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                          <Ruler className="w-3.5 h-3.5 text-black" /> Desired Size Scale
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {sizes.map((s) => (
+                  {/* Phase 3: Details */}
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-4 mb-2">
+                      <span className="w-8 h-[1px] bg-[var(--color-accent)] opacity-50" />
+                      <h3 className="text-xs uppercase font-mono tracking-[0.3em] text-[var(--color-accent)] font-semibold">03. Body & Size</h3>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-12">
+                      <div className="space-y-6">
+                        <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold">Placement Area</label>
+                        <div className="flex flex-wrap gap-2">
+                          {placements.map(p => (
                             <button
-                              key={s.value}
+                              key={p}
                               type="button"
-                              onClick={() => selectSize(s.value)}
-                              className={`py-3 px-3 text-[10px] uppercase font-mono tracking-wider border rounded-2xl transition-all duration-300 cursor-pointer ${
-                                formData.size === s.value
-                                  ? "bg-gold border-gold text-white font-semibold shadow-lg"
-                                  : "bg-white border-neutral-200 hover:border-black text-neutral-600 shadow-sm"
+                              onClick={() => setFormData(prev => ({ ...prev, placement: p }))}
+                              className={`px-4 py-2 text-[10px] uppercase tracking-widest border transition-all ${
+                                formData.placement === p 
+                                  ? "bg-[var(--text-main)] text-[var(--color-bg)] border-[var(--text-main)]" 
+                                  : "border-[var(--border-muted)] text-[var(--text-muted)] hover:border-[var(--text-main)]"
                               }`}
                             >
-                              {s.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Skin placing dropdown */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider block">
-                          Body Placement Area
-                        </label>
-                        <select
-                          name="placement"
-                          value={formData.placement}
-                          onChange={handleInputChange}
-                          className="w-full bg-white border border-neutral-200 focus:border-black focus:ring-2 focus:ring-black/10 text-black py-3 px-4 text-xs rounded-2xl outline-none shadow-sm"
-                        >
-                          {placements.map((p, i) => (
-                            <option key={i} value={p} className="bg-white text-black">
                               {p}
-                              </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* Prior experience and conditional skin color tones */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-neutral-50 border border-neutral-200 p-5 rounded">
-                    {/* Prior Tattoo Experience Toggle */}
-                    <div className="space-y-2 text-black">
-                      <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider block">
-                        Have you had a tattoo before?
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => selectPriorTattoo(true)}
-                          className={`py-3 px-3 text-[10px] uppercase font-mono tracking-wider border rounded-2xl transition-all duration-300 cursor-pointer ${
-                            formData.hasPriorTattoo
-                              ? "bg-gold border-gold text-white font-semibold shadow-lg"
-                              : "bg-white border-neutral-200 hover:border-black text-neutral-600 shadow-sm"
-                          }`}
-                        >
-                          Yes, experienced
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => selectPriorTattoo(false)}
-                          className={`py-3 px-3 text-[10px] uppercase font-mono tracking-wider border rounded-2xl transition-all duration-300 cursor-pointer ${
-                            !formData.hasPriorTattoo
-                              ? "bg-gold border-gold text-white font-semibold shadow-lg"
-                              : "bg-white border-neutral-200 hover:border-black text-neutral-600 shadow-sm"
-                          }`}
-                        >
-                          No, first time
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Conditional Skin Tone Selection widget if hasPriorTattoo is false */}
-                    {!formData.hasPriorTattoo ? (
-                      <div className="space-y-2">
-                        <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider flex items-center gap-1.5 ">
-                          <Palette className="w-3.5 h-3.5 text-black" /> Select Skin Tone Profile
-                        </label>
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {skinTones.map((tone) => (
-                            <button
-                              key={tone.code}
-                              type="button"
-                              onClick={() => selectSkinTone(tone.code)}
-                              style={{ backgroundColor: tone.code }}
-                              className="w-7 h-7 rounded-full border border-neutral-300 focus:outline-none relative transition-transform hover:scale-110 cursor-pointer flex items-center justify-center shadow-sm active:scale-95"
-                              title={tone.name}
-                            >
-                              {formData.skinTone === tone.code && (
-                                <Check className="w-3.5 h-3.5 text-black drop-shadow bg-white/75 rounded-full p-0.5" />
-                              )}
                             </button>
                           ))}
                         </div>
-                        <p className="text-[9px] text-neutral-500 font-mono uppercase tracking-wide mt-1">
-                          Profile: <span className="text-black font-semibold">{skinTones.find(t => t.code === formData.skinTone)?.name || "Warm Amber"}</span> (helps optimized ink contrast profiles)
-                        </p>
                       </div>
-                    ) : (
-                      <div className="flex items-center p-3.5 bg-white border border-neutral-200 rounded">
-                        <div className="text-[10px] text-neutral-600 font-sans leading-relaxed">
-                          <span className="text-black font-serif font-semibold italic">Experienced ink portfolio.</span> Shading contrasts and needle counts will be matched against your existing tattoos' pigment profiles.
+
+                      <div className="space-y-6">
+                        <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold">Approximate Scale</label>
+                        <div className="flex flex-wrap gap-2">
+                          {sizes.map(s => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, size: s }))}
+                              className={`px-6 py-2 text-[10px] uppercase tracking-widest border transition-all ${
+                                formData.size === s 
+                                  ? "bg-[var(--text-main)] text-[var(--color-bg)] border-[var(--text-main)]" 
+                                  : "border-[var(--border-muted)] text-[var(--text-muted)] hover:border-[var(--text-main)]"
+                              }`}
+                            >
+                              {s}
+                            </button>
+                          ))}
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
 
-                  {/* Creative Description */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider flex items-center gap-1.5">
-                      <CircleHelp className="w-3.5 h-3.5 text-black" /> Describe Your Project Vision & Story
-                    </label>
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      rows={4}
-                      placeholder="Share elements you want included, meaningful references, or links to references..."
-                      className="w-full bg-white border border-neutral-200 focus:border-black focus:ring-2 focus:ring-black/10 py-3 px-4 text-sm text-black rounded-2xl outline-none resize-none transition-all duration-300 shadow-sm"
-                    />
-                  </div>
-                </div>
+                  {/* Phase 4: Logistics */}
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-4 mb-2">
+                      <span className="w-8 h-[1px] bg-[var(--color-accent)] opacity-50" />
+                      <h3 className="text-xs uppercase font-mono tracking-[0.3em] text-[var(--color-accent)] font-semibold">04. Logistics</h3>
+                    </div>
 
-                {/* Date and Time Group */}
-                <div className="space-y-6">
-                  <h3 className="font-serif text-sm text-neutral-900 tracking-widest uppercase pb-2 border-b border-neutral-200 font-semibold flex items-center gap-2">
-                    <span className="text-neutral-400">03.</span> Schedule Selection
-                  </h3>
+                    <div className="grid md:grid-cols-2 gap-8">
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold">Preferred Date *</label>
+                        <input
+                          type="date"
+                          name="date"
+                          required
+                          value={formData.date}
+                          onChange={handleInputChange}
+                          className="w-full bg-transparent border-b border-[var(--border-muted)] py-3 focus:border-[var(--color-accent)] outline-none transition-colors text-sm uppercase font-mono"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold">Consultation Slot</label>
+                         <select 
+                           name="timeSlot" 
+                           value={formData.timeSlot} 
+                           onChange={handleInputChange}
+                           className="w-full bg-transparent border-b border-[var(--border-muted)] py-3 focus:border-[var(--color-accent)] outline-none text-sm text-[var(--text-main)]"
+                         >
+                           {timeSlots.map(t => <option key={t} value={t} className="bg-[var(--color-bg)]">{t}</option>)}
+                         </select>
+                      </div>
+                    </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Date Picker */}
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider">
-                        Preferred appointment Date <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        name="date"
-                        required
-                        value={formData.date}
+                    <div className="space-y-4">
+                      <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold">Project Vision & Story</label>
+                      <textarea
+                        name="description"
+                        value={formData.description}
                         onChange={handleInputChange}
-                        className="w-full bg-white border border-neutral-200 focus:border-black focus:ring-2 focus:ring-black/10 py-3 px-4 text-sm text-black rounded-2xl outline-none cursor-pointer shadow-sm"
+                        rows={1}
+                        placeholder="TELL US THE STORY BEHIND THIS PIECE..."
+                        className="w-full bg-transparent border-b border-[var(--border-muted)] py-3 focus:border-[var(--color-accent)] outline-none transition-all text-sm uppercase tracking-wide resize-none"
+                        onInput={(e) => {
+                          e.currentTarget.style.height = 'auto';
+                          e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px';
+                        }}
                       />
                     </div>
 
-                    {/* Time slots */}
-                    <div className="space-y-2">
-                      <label className="text-[10px] text-neutral-600 uppercase font-mono tracking-wider">
-                        Available Consultation Hour
+                    {/* ── Tattoo Idea Reference Upload (always visible) ── */}
+                    <div className="space-y-4 pt-4">
+                      <label className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold flex items-center gap-2">
+                        <Upload size={12} className="text-[var(--color-accent)]" />
+                        Tattoo Idea Reference Image (Optional)
                       </label>
-                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                        {timeSlots.map((ts) => (
-                          <button
-                            key={ts}
-                            type="button"
-                            onClick={() => selectTime(ts)}
-                            className={`py-3 text-[9px] font-mono border rounded-2xl transition-all duration-300 cursor-pointer ${
-                              formData.timeSlot === ts
-                                ? "bg-gold text-white font-extrabold border-gold shadow-lg"
-                                : "bg-white border-neutral-200 hover:border-black text-neutral-600 shadow-sm"
-                            }`}
-                          >
-                            {ts}
-                          </button>
-                        ))}
-                      </div>
+
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => setFormData(p => ({ ...p, uploadedImage: reader.result as string }));
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+
+                      {!formData.uploadedImage ? (
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full border border-dashed border-[var(--border-muted)] hover:border-[var(--color-accent)] py-10 flex flex-col items-center gap-3 transition-all group cursor-pointer"
+                        >
+                          <div className="w-12 h-12 rounded-full border border-[var(--border-muted)] group-hover:border-[var(--color-accent)] flex items-center justify-center transition-all">
+                            <Upload size={18} className="text-[var(--text-muted)] group-hover:text-[var(--color-accent)] transition-colors" />
+                          </div>
+                          <div className="text-center">
+                            <div className="text-[11px] uppercase tracking-widest text-[var(--text-muted)] group-hover:text-[var(--text-main)] transition-colors">Upload a photo or sketch</div>
+                            <div className="text-[10px] text-[var(--text-muted)] opacity-60 mt-1">JPG, PNG, WEBP — max 10mb</div>
+                          </div>
+                        </button>
+                      ) : (
+                        <div className="relative border border-[var(--color-accent)] p-1 inline-block w-full">
+                          <img
+                            src={formData.uploadedImage}
+                            alt="Tattoo reference"
+                            className="w-full max-h-64 object-cover"
+                          />
+                          <div className="absolute top-2 right-2 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="px-3 py-1.5 bg-[var(--color-bg)]/90 backdrop-blur text-[10px] uppercase tracking-wider border border-[var(--border-muted)] hover:border-[var(--color-accent)] transition-all"
+                            >
+                              Change
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormData(p => ({ ...p, uploadedImage: "" }))}
+                              className="px-3 py-1.5 bg-red-900/80 backdrop-blur text-[10px] uppercase tracking-wider border border-red-500/50 text-red-300 hover:bg-red-900 transition-all"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-[var(--color-accent)] text-black text-[9px] uppercase tracking-widest font-bold">
+                            Reference Uploaded
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
 
-                {/* Error Banner */}
-                {errorMsg && (
-                  <div className="p-3 bg-red-950/20 border border-red-500/20 text-red-300 rounded text-xs font-mono">
-                    {errorMsg}
-                  </div>
-                )}
+                  {errorMsg && (
+                    <div className="p-4 bg-red-500/10 border-l-2 border-red-500 text-red-500 text-[10px] uppercase tracking-wider">
+                      {errorMsg}
+                    </div>
+                  )}
 
-                {/* Submit Action Button */}
-                <div className="pt-4">
                   <button
                     type="submit"
                     disabled={loading}
-                    id="submit-booking-btn"
-                    className="w-full py-4 bg-gold text-white font-extrabold text-xs tracking-[0.2em] uppercase rounded-sm transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer transform active:scale-[0.98]"
+                    className="w-full h-16 bg-[var(--color-accent)] text-black font-bebas text-xl tracking-widest uppercase transition-all hover:bg-[#d4a965] disabled:opacity-50"
                   >
-                    {loading ? (
-                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      "Transmit Invitation Request"
-                    )}
+                    {loading ? "Transmitting..." : "Send Booking Invitation"}
                   </button>
+                </form>
+              </div>
+
+              {/* Right Column: Visual Summary / Info Box */}
+              <div className="hidden lg:block space-y-8 sticky top-24">
+                <div className="p-8 border border-[var(--border-muted)] bg-[var(--color-surface)] space-y-8">
+                  <div className="font-bebas text-2xl tracking-wider uppercase border-b border-[var(--border-muted)] pb-4">Process Standards</div>
+                  
+                  <div className="space-y-6">
+                    {[
+                      { title: "Clinical Hygiene", body: "Hospital-grade sterilization. Single-use needles. Fully protected environment." },
+                      { title: "Custom Only", body: "Dagi never reuses stencils. Every design is a unique sculpture for your skin." },
+                      { title: "Consultation Driven", body: "Every tattoo begins with a conversation to ensure alignment with anatomy." }
+                    ].map(item => (
+                      <div key={item.title} className="space-y-2">
+                        <div className="text-[11px] text-[var(--color-accent)] uppercase tracking-widest font-bold">{item.title}</div>
+                        <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">{item.body}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-[var(--border-muted)]">
+                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
+                      <Sparkles size={12} className="text-[var(--color-accent)]" /> 
+                      Appointment only studio
+                    </div>
+                  </div>
                 </div>
-              </form>
+
+                <div className="p-8 border border-[var(--border-muted)] space-y-4">
+                  <div className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] font-semibold">Studio Guidelines</div>
+                  <ul className="space-y-3 text-[12px] text-[var(--text-main)] list-none p-0">
+                    <li className="flex gap-3">
+                      <span className="text-[var(--color-accent)]">✦</span>
+                      <span>No alcohol 24hrs prior.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="text-[var(--color-accent)]">✦</span>
+                      <span>Hydrate thoroughly.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="text-[var(--color-accent)]">✦</span>
+                      <span>Eat a carb-heavy meal before session.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </motion.div>
           ) : (
-            // Custom Victory Outcome screen
             <motion.div
               key="success-screen"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              className="bg-white border border-neutral-200 p-8 md:p-12 rounded text-center relative text-black shadow-sm"
+              className="max-w-2xl mx-auto py-12 md:py-20 text-center space-y-8"
             >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-3 rounded-full border border-neutral-200 shadow-md">
-                <CheckCircle className="w-10 h-10 text-black" />
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full border-2 border-[var(--color-accent)] text-[var(--color-accent)] mb-4">
+                <Check size={40} />
               </div>
-
-              <div className="mt-6 mb-10">
-                <div className="font-serif text-2xl text-black uppercase tracking-wide">
-                  Booking Confirmed
-                </div>
-                <h3 className="text-neutral-500 font-mono text-xs uppercase tracking-widest mt-2">
-                  Session Code: {successData.id || "N/A"}
-                </h3>
-                <div className="w-10 h-[1px] bg-neutral-200 mx-auto my-4" />
-                <p className="text-neutral-600 text-sm max-w-md mx-auto leading-relaxed">
-                  Thank you, <span className="text-black font-semibold">{successData.clientName}</span>. Your tattoo request has been logged in
-                  Dagi's secure calendar pipeline.
+              <div className="space-y-4">
+                <h2 className="text-5xl font-bebas tracking-wider uppercase">Submission Received</h2>
+                <p className="text-[var(--text-muted)] max-w-md mx-auto leading-relaxed">
+                  Your project concept has been transmitted to Dagi's atelier. We review every request individually and will contact you via phone or email to schedule your consultation.
                 </p>
               </div>
-
-              <div className="grid gap-4 md:grid-cols-2 mb-8">
-                <div className="bg-neutral-50 border border-neutral-200 p-5 rounded-[1.5rem] shadow-sm text-left space-y-3">
-                  <div className="text-[10px] uppercase tracking-widest font-semibold text-neutral-500">Booking Summary</div>
-                  <div className="flex justify-between text-neutral-600">
-                    <span>Client</span>
-                    <span className="font-semibold text-black">{successData.clientName}</span>
-                  </div>
-                  <div className="flex justify-between text-neutral-600">
-                    <span>Email</span>
-                    <span className="font-semibold text-black">{successData.clientEmail || "Not provided"}</span>
-                  </div>
-                  <div className="flex justify-between text-neutral-600">
-                    <span>Phone</span>
-                    <span className="font-semibold text-black">{successData.clientPhone}</span>
-                  </div>
-                  <div className="flex justify-between text-neutral-600">
-                    <span>Design source</span>
-                    <span className="font-semibold text-black">{successData.styleSelectionType === "gallery" ? "Dagi's Gallery" : successData.styleSelectionType === "own_art" ? "Own design" : "Curation support"}</span>
-                  </div>
-                  {successData.styleSelectionType === "gallery" && successData.selectedGalleryItemId && (
-                    <div className="flex justify-between text-neutral-600">
-                      <span>Gallery ref</span>
-                      <span className="font-semibold text-black">{successData.selectedGalleryItemId}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-neutral-600">
-                    <span>Style</span>
-                    <span className="font-semibold text-black">{successData.tatStyle}</span>
-                  </div>
+              
+              <div className="p-8 border border-[var(--border-muted)] bg-[var(--color-surface)] inline-block text-left min-w-[320px] space-y-4">
+                <div className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] border-b border-[var(--border-muted)] pb-2 mb-4">Reference Ticket</div>
+                <div className="flex justify-between text-sm uppercase tracking-wide">
+                  <span className="text-[var(--text-muted)]">Client</span>
+                  <span>{successData.clientName}</span>
                 </div>
-
-                <div className="bg-neutral-50 border border-neutral-200 p-5 rounded-[1.5rem] shadow-sm text-left space-y-3">
-                  <div className="text-[10px] uppercase tracking-widest font-semibold text-neutral-500">Session Details</div>
-                  <div className="flex justify-between text-neutral-600">
-                    <span>Placement</span>
-                    <span className="font-semibold text-black">{successData.placement}</span>
-                  </div>
-                  <div className="flex justify-between text-neutral-600">
-                    <span>Size</span>
-                    <span className="font-semibold text-black">{successData.size}</span>
-                  </div>
-                  <div className="flex justify-between text-neutral-600">
-                    <span>Date</span>
-                    <span className="font-semibold text-black">{successData.date}</span>
-                  </div>
-                  <div className="flex justify-between text-neutral-600">
-                    <span>Time</span>
-                    <span className="font-semibold text-black">{successData.timeSlot}</span>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase tracking-widest font-semibold text-neutral-500 mb-2">Project Notes</div>
-                    <p className="text-sm text-black leading-relaxed whitespace-pre-line">{successData.description || "No additional notes provided."}</p>
-                  </div>
+                <div className="flex justify-between text-sm uppercase tracking-wide">
+                  <span className="text-[var(--text-muted)]">Style</span>
+                  <span>{successData.tatStyle}</span>
+                </div>
+                <div className="flex justify-between text-sm uppercase tracking-wide">
+                   <span className="text-[var(--text-muted)]">Date</span>
+                   <span className="font-mono">{successData.date}</span>
                 </div>
               </div>
 
-              {/* Receipt card summary details */}
-              <div className="bg-neutral-50 border border-neutral-200 p-5 rounded max-w-sm mx-auto text-left space-y-3 font-mono text-[11px] mb-8 shadow-inner text-black">
-                <div className="text-center text-[10px] text-black font-bold border-b border-neutral-200 pb-2 uppercase tracking-widest">
-                  Consultation Slip Receipt
-                </div>
-                <div className="flex justify-between text-neutral-600">
-                  <span>Style Choice:</span>
-                  <span className="text-black font-bold">{successData.tatStyle}</span>
-                </div>
-                <div className="flex justify-between text-neutral-600">
-                  <span>Skin Placement:</span>
-                  <span className="text-black">{successData.placement}</span>
-                </div>
-                <div className="flex justify-between text-neutral-600">
-                  <span>Scale size:</span>
-                  <span className="text-black">{successData.size}</span>
-                </div>
-                <div className="flex justify-between text-neutral-600">
-                  <span>Session Date:</span>
-                  <span className="text-black">{successData.date}</span>
-                </div>
-                <div className="flex justify-between text-neutral-600">
-                  <span>Reserved Hour:</span>
-                  <span className="text-black font-bold">{successData.timeSlot}</span>
-                </div>
-              </div>
-
-              {/* Preparation guidelines */}
-              <div className="text-left max-w-lg mx-auto bg-neutral-50 p-5 rounded border border-neutral-200 space-y-3 text-xs mb-8 text-black">
-                <h4 className="font-serif text-black font-semibold tracking-wider text-xs uppercase">
-                  Session preparation guidelines:
-                </h4>
-                <ul className="list-disc list-inside space-y-1.5 text-neutral-600 text-[11px] leading-relaxed">
-                  <li>Please remain fully hydrated for at least 24 hours prior.</li>
-                  <li>Avoid drinking alcohol or blood thinners 24 hours before your ink session.</li>
-                  <li>Dagi recommends eating a solid meal 1-2 hours before the scheduled slots.</li>
-                  <li>Wear loose-fitting, comfortable garments that grant easy access to the skin placement area.</li>
-                </ul>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <div className="pt-8">
                 <button
                   onClick={() => setSuccessData(null)}
-                  className="px-6 py-3 bg-white hover:bg-[#fafafa] text-black border border-neutral-200 text-xs font-semibold tracking-widest uppercase rounded cursor-pointer"
+                  className="px-12 py-4 border border-[var(--border-muted)] hover:border-[var(--text-main)] text-xs uppercase tracking-widest transition-all"
                 >
-                  Book Another Concept
-                </button>
-                <button
-                  onClick={() => {
-                    setSuccessData(null);
-                    if (onBrowseGallery) onBrowseGallery();
-                  }}
-                  className="px-6 py-3 bg-gold text-white font-bold text-xs tracking-widest uppercase rounded cursor-pointer transition-all duration-300"
-                >
-                  Return To Catalog
+                  Return to Atelier
                 </button>
               </div>
             </motion.div>

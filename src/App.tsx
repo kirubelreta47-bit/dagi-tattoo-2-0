@@ -7,8 +7,7 @@ import AdminDashboard from "./components/AdminDashboard";
 import { supabase } from "./lib/supabase";
 import {
   MapPin, Phone, Mail, Sparkles, ChevronDown,
-  Instagram, ArrowRight, ShieldCheck, Pencil, Clock,
-  Sun, Moon
+  Instagram, ArrowRight, ShieldCheck, Pencil, Clock
 } from "lucide-react";
 
 const { VITE_LOCAL_ADMIN_EMAIL, VITE_LOCAL_ADMIN_PASSWORD, VITE_LOCAL_ADMIN_TOKEN } = (import.meta as any).env ?? {};
@@ -66,7 +65,7 @@ export default function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [initialGallerySelection, setInitialGallerySelection] = useState<{ styleName: string; itemId: string } | null>(null);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme] = useState<"dark" | "light">("dark");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
@@ -240,12 +239,9 @@ export default function App() {
       {/* ─── Ambient background ─── */}
       <div aria-hidden style={{
         position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
-        background: isDark ? `
+        background: `
           radial-gradient(ellipse 55% 45% at 10% 15%, rgba(255,255,255,0.01) 0%, transparent 65%),
           radial-gradient(ellipse 45% 55% at 90% 85%, rgba(255,255,255,0.01) 0%, transparent 65%)
-        ` : `
-          radial-gradient(ellipse 55% 45% at 10% 15%, rgba(0,0,0,0.01) 0%, transparent 65%),
-          radial-gradient(ellipse 45% 55% at 90% 85%, rgba(0,0,0,0.01) 0%, transparent 65%)
         `
       }} />
 
@@ -255,7 +251,7 @@ export default function App() {
 
           {/* Wordmark */}
           <button onClick={() => goTo("atelier")} className="bg-transparent border-none cursor-pointer flex items-center p-0 hover:opacity-90 transition-opacity">
-            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center border ${isDark ? "border-neutral-800 bg-neutral-900" : "border-neutral-200 bg-white"}`}>
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center border border-neutral-800 bg-neutral-900">
               <img 
                 src="/src/assets/images/RabOM.jpg" 
                 alt="Dagi Tattoo Logo" 
@@ -273,7 +269,7 @@ export default function App() {
                   <button
                     key={tab}
                     onClick={() => goTo(tab)}
-                    className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-full cursor-pointer transition-all duration-200 text-[8.5px] sm:text-[10px] font-mono tracking-wider sm:tracking-widest uppercase flex items-center gap-1 shrink-0 ${
+                    className={`px-1.5 py-1 sm:px-3 sm:py-1.5 rounded-full cursor-pointer transition-all duration-200 text-[12px] sm:text-[14px] font-bebas tracking-wider sm:tracking-widest uppercase flex items-center gap-1 shrink-0 ${
                       active 
                           ? "bg-gold text-black font-semibold"
                           : "text-muted hover:text-primary border border-transparent"
@@ -298,33 +294,7 @@ export default function App() {
               <Sparkles size={9} style={{ color: (isAdminMode || isAdminAuthenticated) ? "var(--text-main)" : "#F5F5F5" }} />
             </button>
 
-            {/* Dark & Light Theme Options inside Nav bar */}
-            <div className={`flex items-center gap-0.5 border rounded-full p-0.5 ${
-              isDark ? "bg-neutral-900 border-neutral-800" : "bg-neutral-100 border-neutral-200"
-            }`}>
-              <button
-                onClick={() => setTheme("light")}
-                className={`p-1 rounded-full cursor-pointer transition-colors ${
-                  !isDark 
-                    ? "bg-black text-white" 
-                    : "text-neutral-500 hover:text-white"
-                }`}
-                title="Light Theme"
-              >
-                <Sun size={11} />
-              </button>
-              <button
-                onClick={() => setTheme("dark")}
-                className={`p-1 rounded-full cursor-pointer transition-colors ${
-                  isDark 
-                    ? "bg-white text-black" 
-                    : "text-neutral-500 hover:text-black"
-                }`}
-                title="Dark Theme"
-              >
-                <Moon size={11} />
-              </button>
-            </div>
+
           </div>
         </div>
       </header>
@@ -341,7 +311,6 @@ export default function App() {
               <Hero
                 onBookClick={() => goTo("booking")}
                 onExploreClick={() => goTo("gallery")}
-                theme={theme}
               />
 
               {/* 2 ─ ABOUT SECTION */}
@@ -483,7 +452,7 @@ export default function App() {
 
                   <div className="grid gap-6 md:grid-cols-3">
                     {[
-                      { title: "Location", body: "Bole Medhanialem Road, Addis Ababa" },
+                      { title: "Location", body: "Bole Mikael, Addis Ababa" },
                       { title: "Bookings", body: "+251 911 234567" },
                       { title: "Email", body: "bookings@dagitattoo.com" }
                     ].map((item, idx) => (
@@ -512,10 +481,10 @@ export default function App() {
                 <div style={{ maxWidth: 1080, margin: "0 auto" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48 }}>
                     <div style={{ width: 36, height: 1, background: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)" }} />
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "var(--text-main)" }}>The Standard</span>
+                    <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--color-accent)" }}>The Standard</span>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 1, background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)", borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 1, background: "var(--border-muted)", borderRadius: 2, overflow: "hidden" }}>
                     {pillars.map((p, i) => (
                       <motion.div
                         key={i}
@@ -524,13 +493,14 @@ export default function App() {
                         transition={{ delay: 0.1 + i * 0.1 }}
                         style={{ 
                           padding: "40px 36px", 
-                          background: isDark ? "#061739" : "#f7f3ef",
-                          transition: "background 0.3s"
+                          background: isDark ? "var(--color-surface)" : "var(--color-surface-soft)",
+                          transition: "background 0.3s",
+                          border: "1px solid var(--border-muted)"
                         }}
                       >
                         <div style={{ marginBottom: 20 }}>{p.icon}</div>
-                        <div style={{ fontFamily: "Georgia, serif", fontSize: 17, color: isDark ? "#ffffff" : "#000000", marginBottom: 14, letterSpacing: "0.01em" }}>{p.title}</div>
-                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "rgba(245,245,245,0.65)", lineHeight: 1.75 }}>{p.body}</div>
+                        <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, color: isDark ? "var(--text-main)" : "var(--text-main)", marginBottom: 14, letterSpacing: "0.05em", textTransform: "uppercase" }}>{p.title}</div>
+                        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: "var(--text-muted)", lineHeight: 1.75 }}>{p.body}</div>
                       </motion.div>
                     ))}
                   </div>
@@ -593,7 +563,7 @@ export default function App() {
           {/* ══ GALLERY ══ */}
           {activeTab === "gallery" && (
             <motion.div key="gallery" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-              <Gallery onSelectStyle={handleSelectStyle} theme={theme} />
+              <Gallery onSelectStyle={handleSelectStyle} />
             </motion.div>
           )}
 
@@ -611,7 +581,6 @@ export default function App() {
                 initialGallerySelection={initialGallerySelection}
                 onClearGallerySelection={() => setInitialGallerySelection(null)}
                 onBrowseGallery={() => goTo("gallery")}
-                theme={theme}
               />
 
               {/* FAQ Section at bottom of Booking view */}
@@ -826,7 +795,6 @@ export default function App() {
                 <div style={{ paddingTop: 24 }}>
                   <AdminDashboard
                     refreshTrigger={refreshTrigger}
-                    theme={theme}
                     isAuthenticated={true}
                     accessToken={session?.access_token}
                     onLogout={handleAdminLogout}
@@ -867,7 +835,7 @@ export default function App() {
 
             {/* Contact links */}
             {[
-              { icon: <MapPin size={16} />, text: "Bole Medhanialem Road, Addis Ababa" },
+              { icon: <MapPin size={16} />, text: "Bole Mikael, Addis Ababa" },
               { icon: <Phone size={16} />, text: "+251 911 234567" },
               { icon: <Mail size={16} />, text: "bookings@dagitattoo.com" },
             ].map((item, idx) => (

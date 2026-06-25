@@ -4,7 +4,7 @@ import { CalendarDays, Images } from "lucide-react";
 interface HeroProps {
   onBookClick: () => void;
   onExploreClick: () => void;
-  theme: "dark" | "light";
+  theme?: "dark" | "light";
 }
 
 export default function Hero({ onBookClick, onExploreClick }: HeroProps) {
