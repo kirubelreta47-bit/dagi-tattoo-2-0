@@ -253,7 +253,7 @@ export default function App() {
           <button onClick={() => goTo("atelier")} className="bg-transparent border-none cursor-pointer flex items-center p-0 hover:opacity-90 transition-opacity">
             <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center border border-neutral-800 bg-neutral-900">
               <img 
-                src="/src/assets/images/RabOM.jpg" 
+                src="/image/RabOM.jpg" 
                 alt="Dagi Tattoo Logo" 
                 className="w-full h-full object-cover"
               />
