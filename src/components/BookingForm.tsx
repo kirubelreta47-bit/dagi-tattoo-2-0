@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Upload, Check, Sparkles, Image as ImageIcon } from "lucide-react";
+import { Upload, Check, Sparkles, Image as ImageIcon, Download, Camera } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface BookingFormProps {
   onSuccess?: () => void;
@@ -473,50 +475,300 @@ export default function BookingForm({
               </div>
             </motion.div>
           ) : (
-            <motion.div
-              key="success-screen"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="max-w-2xl mx-auto py-12 md:py-20 text-center space-y-8"
-            >
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full border-2 border-[var(--color-accent)] text-[var(--color-accent)] mb-4">
-                <Check size={40} />
-              </div>
-              <div className="space-y-4">
-                <h2 className="text-5xl font-bebas tracking-wider uppercase">Submission Received</h2>
-                <p className="text-[var(--text-muted)] max-w-md mx-auto leading-relaxed">
-                  Your project concept has been transmitted to Dagi's atelier. We review every request individually and will contact you via phone or email to schedule your consultation.
-                </p>
-              </div>
-              
-              <div className="p-8 border border-[var(--border-muted)] bg-[var(--color-surface)] inline-block text-left min-w-[320px] space-y-4">
-                <div className="text-[10px] uppercase tracking-widest text-[var(--text-muted)] border-b border-[var(--border-muted)] pb-2 mb-4">Reference Ticket</div>
-                <div className="flex justify-between text-sm uppercase tracking-wide">
-                  <span className="text-[var(--text-muted)]">Client</span>
-                  <span>{successData.clientName}</span>
-                </div>
-                <div className="flex justify-between text-sm uppercase tracking-wide">
-                  <span className="text-[var(--text-muted)]">Style</span>
-                  <span>{successData.tatStyle}</span>
-                </div>
-                <div className="flex justify-between text-sm uppercase tracking-wide">
-                   <span className="text-[var(--text-muted)]">Date</span>
-                   <span className="font-mono">{successData.date}</span>
-                </div>
-              </div>
-
-              <div className="pt-8">
-                <button
-                  onClick={() => setSuccessData(null)}
-                  className="px-12 py-4 border border-[var(--border-muted)] hover:border-[var(--text-main)] text-xs uppercase tracking-widest transition-all"
-                >
-                  Return to Atelier
-                </button>
-              </div>
-            </motion.div>
+            <SuccessTicket data={successData} onReset={() => setSuccessData(null)} />
           )}
         </AnimatePresence>
       </div>
     </section>
   );
 }
+
+// ─── PREMIUM REFERENCE TICKET ───────────────────────────────────────────────
+interface SuccessTicketProps {
+  data: any;
+  onReset: () => void;
+}
+
+function SuccessTicket({ data, onReset }: SuccessTicketProps) {
+  const ticketRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [screenshotting, setScreenshotting] = useState(false);
+
+  const ticketId = data.id
+    ? data.id.slice(0, 8).toUpperCase()
+    : Math.random().toString(36).slice(2, 10).toUpperCase();
+
+  const rows = [
+    { label: "Client", value: data.clientName },
+    { label: "Phone", value: data.clientPhone },
+    ...(data.clientEmail ? [{ label: "Email", value: data.clientEmail }] : []),
+    { label: "Style", value: data.tatStyle },
+    { label: "Concept", value: data.styleSelectionType === "gallery" ? "Gallery Selection" : data.styleSelectionType === "own_art" ? "Custom Idea" : "Expert Curation" },
+    { label: "Placement", value: data.placement },
+    { label: "Size", value: data.size },
+    { label: "Session Date", value: data.date },
+    { label: "Time Slot", value: data.timeSlot },
+    ...(data.description ? [{ label: "Vision", value: data.description }] : []),
+    { label: "Prior Tattoo", value: data.hasPriorTattoo ? "Yes" : "No" },
+  ];
+
+  const captureTicket = async () => {
+    if (!ticketRef.current) return null;
+    return await html2canvas(ticketRef.current, {
+      backgroundColor: "#0a0a0a",
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+  };
+
+  const handleDownloadPDF = async () => {
+    setDownloading(true);
+    try {
+      const canvas = await captureTicket();
+      if (!canvas) return;
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [canvas.width / 2, canvas.height / 2] });
+      pdf.addImage(imgData, "PNG", 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.save(`dagi-tattoo-booking-${ticketId}.pdf`);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleScreenshot = async () => {
+    setScreenshotting(true);
+    try {
+      const canvas = await captureTicket();
+      if (!canvas) return;
+      const link = document.createElement("a");
+      link.download = `dagi-tattoo-booking-${ticketId}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } finally {
+      setScreenshotting(false);
+    }
+  };
+
+  return (
+    <motion.div
+      key="success-screen"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="max-w-xl mx-auto py-12 md:py-20 space-y-8"
+    >
+      {/* Header */}
+      <div className="text-center space-y-3">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+          className="inline-flex items-center justify-center w-16 h-16 rounded-full border border-[var(--color-accent)] text-[var(--color-accent)] mb-2"
+        >
+          <Check size={28} />
+        </motion.div>
+        <h2 className="text-4xl font-bebas tracking-widest uppercase text-[var(--text-main)]">
+          Booking Confirmed
+        </h2>
+        <p className="text-[12px] font-mono tracking-[0.2em] uppercase text-[var(--text-muted)]">
+          Your session request has been received
+        </p>
+      </div>
+
+      {/* ── THE TICKET ── */}
+      <div ref={ticketRef} style={{ background: "#0a0a0a", padding: "0" }}>
+        <div style={{
+          border: "1px solid rgba(199,154,93,0.35)",
+          background: "linear-gradient(160deg, #111010 0%, #0d0c0c 100%)",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+
+          {/* Top accent bar */}
+          <div style={{ height: 3, background: "linear-gradient(90deg, #C79A5D, #8B6534, #C79A5D)" }} />
+
+          {/* Ticket header */}
+          <div style={{ padding: "28px 32px 20px", borderBottom: "1px solid rgba(199,154,93,0.15)", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: "0.15em", color: "#F5F2EC" }}>
+                DAGI TATTOO
+              </div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.35em", color: "#C79A5D", textTransform: "uppercase", marginTop: 4 }}>
+                Atelier · Addis Ababa
+              </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "rgba(245,242,236,0.35)", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+                Ref
+              </div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, color: "#C79A5D", letterSpacing: "0.12em", marginTop: 2 }}>
+                #{ticketId}
+              </div>
+            </div>
+          </div>
+
+          {/* Ticket body — detail rows */}
+          <div style={{ padding: "24px 32px" }}>
+            {rows.map((row, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: 16,
+                  padding: "12px 0",
+                  borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                }}
+              >
+                <span style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 9,
+                  letterSpacing: "0.3em",
+                  textTransform: "uppercase",
+                  color: "rgba(245,242,236,0.35)",
+                  flexShrink: 0,
+                  paddingTop: 1,
+                }}>
+                  {row.label}
+                </span>
+                <span style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 13,
+                  color: "#F5F2EC",
+                  textAlign: "right",
+                  wordBreak: "break-word",
+                  maxWidth: "60%",
+                }}>
+                  {row.value}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Skin tone swatch row */}
+          {data.skinTone && (
+            <div style={{ padding: "0 32px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(245,242,236,0.35)" }}>
+                Skin Tone
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 20, height: 20, borderRadius: "50%", background: data.skinTone, border: "1px solid rgba(255,255,255,0.15)" }} />
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#F5F2EC", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  {data.skinTone}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Status badge + issued date */}
+          <div style={{
+            padding: "16px 32px 20px",
+            borderTop: "1px solid rgba(199,154,93,0.15)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#C79A5D", animation: "pulse 2s infinite" }} />
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.25em", color: "#C79A5D", textTransform: "uppercase" }}>
+                Pending Review
+              </span>
+            </div>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "rgba(245,242,236,0.25)", letterSpacing: "0.15em" }}>
+              {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase()}
+            </span>
+          </div>
+
+          {/* Bottom decorative strip */}
+          <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(199,154,93,0.3), transparent)" }} />
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <button
+          onClick={handleDownloadPDF}
+          disabled={downloading}
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: "14px 24px",
+            background: "var(--color-accent)",
+            border: "none",
+            color: "#000",
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 10,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            cursor: downloading ? "wait" : "pointer",
+            opacity: downloading ? 0.7 : 1,
+            transition: "opacity 0.2s",
+          }}
+          onMouseEnter={e => { if (!downloading) e.currentTarget.style.opacity = "0.85"; }}
+          onMouseLeave={e => { if (!downloading) e.currentTarget.style.opacity = "1"; }}
+        >
+          <Download size={13} />
+          {downloading ? "Generating..." : "Download PDF"}
+        </button>
+
+        <button
+          onClick={handleScreenshot}
+          disabled={screenshotting}
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: "14px 24px",
+            background: "transparent",
+            border: "1px solid rgba(255,255,255,0.15)",
+            color: "rgba(245,242,236,0.75)",
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 10,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            cursor: screenshotting ? "wait" : "pointer",
+            opacity: screenshotting ? 0.7 : 1,
+            transition: "opacity 0.2s, border-color 0.2s",
+          }}
+          onMouseEnter={e => { if (!screenshotting) e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)"; }}
+          onMouseLeave={e => { if (!screenshotting) e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
+        >
+          <Camera size={13} />
+          {screenshotting ? "Capturing..." : "Save as Image"}
+        </button>
+      </div>
+
+      {/* Return link */}
+      <div className="text-center pt-2">
+        <button
+          onClick={onReset}
+          style={{
+            background: "none",
+            border: "none",
+            fontFamily: "'DM Mono', monospace",
+            fontSize: 10,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "rgba(245,242,236,0.3)",
+            cursor: "pointer",
+            textDecoration: "underline",
+            textUnderlineOffset: 4,
+            transition: "color 0.2s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = "rgba(245,242,236,0.6)"}
+          onMouseLeave={e => e.currentTarget.style.color = "rgba(245,242,236,0.3)"}
+        >
+          ← Return to Atelier
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
