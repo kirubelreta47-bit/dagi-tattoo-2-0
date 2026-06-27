@@ -823,7 +823,7 @@ export default function App() {
             >
               <div className="w-12 h-12 rounded-full overflow-hidden border border-white/20 mb-6">
                 <img 
-                  src="/src/assets/images/RabOM.jpg" 
+                  src="/image/RabOM.jpg" 
                   alt="Dagi Tattoo"
                   className="w-full h-full object-cover"
                 />
