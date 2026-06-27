@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Upload, Check, Sparkles, Image as ImageIcon, Download, Camera } from "lucide-react";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 
 interface BookingFormProps {
   onSuccess?: () => void;
@@ -475,7 +475,7 @@ export default function BookingForm({
               </div>
             </motion.div>
           ) : (
-            <SuccessTicket data={successData} onReset={() => setSuccessData(null)} />
+            <SuccessTicket key="success-ticket" data={successData} onReset={() => setSuccessData(null)} />
           )}
         </AnimatePresence>
       </div>
